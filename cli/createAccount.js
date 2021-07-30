@@ -11,27 +11,21 @@ if (dotenvConfig.error) console.log(dotenvConfig.error);
 // Load ripple-lib API
 const RippleAPI = require("ripple-lib").RippleAPI;
 
-// Connect to server
+// Configure API
 const api = new RippleAPI({
   server: process.env.XRPL_SERVER
 });
 
-// Make Connection
-api.connect();
-
-// Handle Errors
-api.on("error", (errorCode, errorMessage, data) => {
-  console.error(`${errorCode} : ${errorMessage} : ${data}`);
-});
-
-// Once connected, create new account
-api.on("connected", async () => {
+// Create new account
+async function run() {
   const response = await api.generateAddress();
   showMessage("CreateAccount", response);
   showMessage("Address", response.address);
   showMessage("Secret", response.secret);
-  api.disconnect();
-});
+}
+
+// Run Function
+run();
 
 // Function to display similar console messages
 function showMessage(title, message) {

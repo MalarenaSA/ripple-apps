@@ -1,6 +1,6 @@
 "use strict";
 
-// getAccountInfo App - To get account info
+// getTransactionInfo App - To get transaction info
 
 // Load Env Variables
 const Dotenv = require("dotenv");
@@ -24,10 +24,10 @@ api.on("error", (errorCode, errorMessage, data) => {
   console.error(`${errorCode} : ${errorMessage} : ${data}`);
 });
 
-// Once connected, provide account info
+// Once connected, provide ledger info
 api.on("connected", async () => {
-  const response = await api.getAccountInfo(process.env.XRPL_ADDRESS);
-  showMessage("AccountInfo", response);
+  const response = await api.getTransaction(process.env.XRPL_TRANSACTION);
+  showMessage("TransactionInfo", response);
   // Disconnect from Server
   api.disconnect();
 });

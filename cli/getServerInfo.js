@@ -11,12 +11,12 @@ if (dotenvConfig.error) console.log(dotenvConfig.error);
 // Load ripple-lib API
 const RippleAPI = require("ripple-lib").RippleAPI;
 
-// Connect to server
+// Configure API
 const api = new RippleAPI({
   server: process.env.XRPL_SERVER
 });
 
-// Make Connection
+// Connect to Server
 api.connect();
 
 // Handle Errors
@@ -28,6 +28,7 @@ api.on("error", (errorCode, errorMessage, data) => {
 api.on("connected", async () => {
   const response = await api.getServerInfo();
   showMessage("ServerInfo", response);
+  // Disconnect from Server
   api.disconnect();
 });
 

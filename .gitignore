@@ -107,6 +107,5 @@ dist
 # Local working files
 _localFiles
 
-# Local .env giles
-.env-localnet
-.env-testnet
+# Local .env files
+.env-*
