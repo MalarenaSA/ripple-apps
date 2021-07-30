@@ -35,5 +35,5 @@ api.on("connected", async () => {
 function showMessage(title, message) {
   console.log(`---------- ${title} ----------`);
   console.log(message);
-  console.log(`========== \\${title} ==========`);
+  console.log(`========== \\${title} ==========`, "\n");
 }
