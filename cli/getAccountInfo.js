@@ -6,7 +6,6 @@
 const Dotenv = require("dotenv");
 const dotenvConfig = Dotenv.config();
 if (dotenvConfig.error) console.log(dotenvConfig.error);
-// console.log(process.env);
 
 // Load ripple-lib API
 const RippleAPI = require("ripple-lib").RippleAPI;
@@ -16,25 +15,39 @@ const api = new RippleAPI({
   server: process.env.XRPL_SERVER
 });
 
-// Connect to Server
-api.connect();
-
 // Handle Errors
 api.on("error", (errorCode, errorMessage, data) => {
   console.error(`${errorCode} : ${errorMessage} : ${data}`);
 });
 
-// Once connected, provide account info
-api.on("connected", async () => {
-  const response = await api.getAccountInfo(process.env.XRPL_ADDRESS);
-  showMessage("AccountInfo", response);
-  // Disconnect from Server
-  api.disconnect();
+// Handle Connection
+api.on("connected", () => {
+  console.log(`Connected to server: ${process.env.XRPL_SERVER}\n`);
 });
+
+// Handle Disconnection
+api.on("disconnected", (code) => {
+  console.log(`Disconnected from server with code: ${code}\n`);
+});
+
+
+// Connect to Server and process request
+api.connect().then(() => {
+  // Send Request
+  return api.getAccountInfo(process.env.XRPL_ADDRESS);
+}).then((response) => {
+  // Process Response
+  showMessage("Account", `${process.env.XRPL_ACCOUNT} - ${process.env.XRPL_ADDRESS}`);
+  showMessage("AccountInfo", response);
+}).then(() => {
+  // Disconnect from the server
+  return api.disconnect();
+}). catch(console.error);
+
 
 // Function to display similar console messages
 function showMessage(title, message) {
   console.log(`---------- ${title} ----------`);
   console.log(message);
-  console.log(`========== \\${title} ==========`, "\n");
+  console.log(`========== \\${title} ==========\n`);
 }

@@ -1,5 +1,8 @@
 "use strict";
 
+
+// UP TO HERE TO UPDATE AGAINST BOILERPLATE
+
 // getServerInfo App - To get server info
 
 // Load Env Variables

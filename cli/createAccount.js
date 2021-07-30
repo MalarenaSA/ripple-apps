@@ -6,7 +6,6 @@
 const Dotenv = require("dotenv");
 const dotenvConfig = Dotenv.config();
 if (dotenvConfig.error) console.log(dotenvConfig.error);
-// console.log(process.env);
 
 // Load ripple-lib API
 const RippleAPI = require("ripple-lib").RippleAPI;
@@ -16,8 +15,13 @@ const api = new RippleAPI({
   server: process.env.XRPL_SERVER
 });
 
+// Handle Errors
+api.on("error", (errorCode, errorMessage, data) => {
+  console.error(`${errorCode} : ${errorMessage} : ${data}`);
+});
+
 // Create new account
-async function run() {
+async function createAccount() {
   const response = await api.generateAddress();
   showMessage("CreateAccount", response);
   showMessage("Address", response.address);
@@ -25,7 +29,7 @@ async function run() {
 }
 
 // Run Function
-run();
+createAccount();
 
 // Function to display similar console messages
 function showMessage(title, message) {

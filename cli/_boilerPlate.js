@@ -1,11 +1,11 @@
 "use strict";
 
-// getLedgerInfo App - To get ledger info
+// APPNAME App - To APPDESC
 
 // Load Env Variables
 const Dotenv = require("dotenv");
 const dotenvConfig = Dotenv.config();
-if (dotenvConfig.error) console.log(dotenvConfig.error);
+if (dotenvConfig.error) console.error(dotenvConfig.error);
 
 // Load ripple-lib API
 const RippleAPI = require("ripple-lib").RippleAPI;
@@ -34,18 +34,18 @@ api.on("disconnected", (code) => {
 // Connect to Server and process request
 api.connect().then(() => {
   // Send Request
-  return api.getLedger();
+  /* Insert Code Here */
+  // return api....
 }).then((response) => {
   // Process Response
-  showMessage("LedgerInfo", response);
-  showMessage("Total XRP", api.dropsToXrp(response.totalDrops));
+  showMessage(response);
 }).then(() => {
   // Disconnect from the server
   return api.disconnect();
 }). catch(console.error);
 
 
-// Function to display similar console messages
+// Function to display formatted messages on the console
 function showMessage(title, message) {
   console.log(`---------- ${title} ----------`);
   console.log(message);
