@@ -1,0 +1,37 @@
+{
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2021": true,
+    "mocha": true
+  },
+  "plugins": [
+    "html"
+  ],
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "ecmaVersion": 12,
+    "sourceType": "module"
+  },
+  "rules": {
+    "indent": [
+      "warn",
+      2, {
+        "flatTernaryExpressions": true,
+        "SwitchCase": 1
+      }
+      ],
+    "linebreak-style": [
+      "error",
+      "windows"
+    ],
+    "semi": [
+      "error",
+      "always"
+    ],
+    "no-unused-vars": [
+      "warn"
+    ],
+    "no-console": "off"
+  }
+}
