@@ -1,6 +1,6 @@
 "use strict";
 
-// APPNAME App - To APPDESC
+// APP-NAME App - To APP-DESC
 
 // Load Env Variables
 const Dotenv = require("dotenv");
@@ -38,7 +38,7 @@ api.connect().then(() => {
   // return api....
 }).then((response) => {
   // Process Response
-  showMessage(response);
+  showMessage("Title", response);
 }).then(() => {
   // Disconnect from the server
   return api.disconnect();
