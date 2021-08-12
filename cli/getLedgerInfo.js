@@ -37,8 +37,10 @@ api.connect().then(() => {
   return api.getLedger();
 }).then((response) => {
   // Process Response
+  const age = (new Date() - new Date(response.closeTime)) / 1000;
   showMessage("LedgerInfo", response);
-  showMessage("Total XRP", api.dropsToXrp(response.totalDrops));
+  showMessage("LedgerSummary", `Age: ${age} / Latest:  ${response.ledgerVersion}`);
+  // showMessage("Total XRP", api.dropsToXrp(response.totalDrops));  // Not really required!
 }).then(() => {
   // Disconnect from the server
   return api.disconnect();

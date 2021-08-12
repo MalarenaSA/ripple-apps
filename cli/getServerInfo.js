@@ -38,6 +38,7 @@ api.connect().then(() => {
 }).then((response) => {
   // Process Response
   showMessage("ServerInfo", response);
+  showMessage("ServerSummary", `State: ${response.serverState} / Latest: ${response.validatedLedger.ledgerVersion}`);
 }).then(() => {
   // Disconnect from the server
   return api.disconnect();

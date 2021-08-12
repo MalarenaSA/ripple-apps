@@ -38,6 +38,7 @@ api.connect().then(() => {
 }).then((response) => {
   // Process Response
   showMessage("TransactionInfo", response);
+  showMessage("TransactionSummary", `Result: ${response.outcome.result} / Amount: ${response.outcome.deliveredAmount.currency} ${response.outcome.deliveredAmount.value}`);
 }).then(() => {
   // Disconnect from the server
   return api.disconnect();
