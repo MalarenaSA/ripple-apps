@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="Ripple App - Monitor" />
+  <meta name="keywords" content="XRP Ripple Monitor" />
+  <meta name="author" content="Malarena SA" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>Ripple Monitor</title>
+
+  <!-- Bootstrap Stylesheet -->
+  <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css" />
+
+  <!-- Monitor Stylesheet -->
+  <link rel="stylesheet" href="./css/monitor.css" />
+
+</head>
+
+<body class="bg-dark text-light mx-3 my-2">
+  <!-- Header -->
+  <header class="container mb-4">
+    <div class="row">
+      <!-- Link to XRPL Explorer -->
+      <div class="col-3 text-start">
+        <a href="https://livenet.xrpl.org/" target="blank">
+          <img class="py-3" src="./images/xrplLedger.svg" alt="XRPL Explorer Logo" />
+        </a>
+      </div>
+
+      <!-- Title -->
+      <div class="col-6 text-center">
+        <h2 class="display-5">Ripple XRP Monitor</h2>
+        <p id="status"></p>
+      </div>
+
+      <!-- Link to Settings Modal -->
+      <div class="col-3 text-end">
+        <a href="#" data-bs-toggle="modal" data-bs-target="#settingsModal">
+          <img class="py-3" src="./images/gear.svg" alt="Settings" />
+        </a>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Server & Ledger Info Panel -->
+  <section class="container mb-5">
+    <div class="row justify-content-evenly">
+      <!-- Server Status -->
+      <div class="col-4 border">
+        <table class="table table-sm table-dark" id="serverStatus">
+          <thead>
+            <tr><th class="text-center" colspan="2" scope="colgroup">
+              <h4 class="text-info">Server Status</h4>
+            </th></tr>
+          </thead>
+          <tbody>
+            <tr><th>Server Hostname:</th><td>server-gvcrwd3 (Mainnet)</td></tr>
+            <tr><th>State:</th><td class="col-success">Full</td></tr>
+            <tr><th>Latest Ledger:</th><td>20061780</td></tr>
+            <tr><th>Ledgers Available:</th><td>18585956-20061780</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Ledger Status -->
+      <div class="col-4 border">
+        <table class="table table-sm table-dark" id="ledgerStatus">
+          <thead>
+            <tr><th class="text-center" colspan="2" scope="colgroup">
+              <h4 class="text-info">Ledger Status</h4>
+            </th></tr>
+          </thead>
+          <tbody>
+            <tr><th>Ledger Version:</th><td>20061780</td></tr>
+            <tr><th>Age:</th><td class="col-danger">0.418s</td></tr>
+            <tr><th>Close Time:</th><td>12/08/2021 16:48:30</td></tr>
+            <tr><th>Current Fee:</th><td>0.000012 XRP</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </section>
+  
+  <!-- Account Info Panel -->
+  <section class="container-fluid mb-4">
+    <div class="row">
+      <!-- Account #1 -->
+      <div class="col-4 border">
+        <table class="table table-sm table-dark" id="accountStatus01">
+          <thead>
+            <tr><th class="text-center" colspan="2" scope="colgroup">
+              <h5 class="text-info">Account: Testnet01</h5>
+            </th></tr>
+          </thead>
+          <tbody>
+            <tr><th>Address:</th><td>rww9WLeWwviNvAJV3QeRCof3kJLomPnaNw</td></tr>
+            <tr><th>Balance:</th><td>92.123456 XRP</td></tr>
+          </tbody>
+        </table>
+
+        <!-- Account #1 Transactions -->
+        <div class="card bg-dark text-light" id="accountTrans01">
+          <div class="card-body">
+            <div class="card-text overflow-auto trans-list">
+              <p class="col-sent">13/08/2021 10:25:02 > 95.000000 XRP Sent</p>
+              <p class="bg-col-received text-dark">13/08/2021 10:25:12 > 195.000000 XRP Received</p>
+              <p class="col-sent">13/08/2021 10:25:32 > 95.000000 XRP Sent</p>
+              <p class="col-received">13/08/2021 10:25:12 > 195.000000 XRP Received</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account #2 -->
+      <div class="col-4 border">
+        <table class="table table-sm table-dark" id="accountStatus02">
+          <thead>
+            <tr><th class="text-center" colspan="2" scope="colgroup">
+              <h5 class="text-info">Account: Testnet02</h5>
+            </th></tr>
+          </thead>
+          <tbody>
+            <tr><th>Address:</th><td>rhacBEhAdTBeuwcXe5ArVnX8Kwh886poSo</td></tr>
+            <tr><th>Balance:</th><td>100.000000 XRP</td></tr>
+          </tbody>
+        </table>
+
+        <!-- Account #2 Transactions -->
+        <div class="card bg-dark text-light" id="accountTrans02">
+          <div class="card-body">
+            <div class="card-text overflow-auto trans-list">
+              <p class="col-received">13/08/2021 10:25:12 > 195.000000 XRP Received</p>
+              <p class="col-sent">13/08/2021 10:25:32 > 95.000000 XRP Sent</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account #3 -->
+      <div class="col-4 border">
+        <table class="table table-sm table-dark" id="accountStatus03">
+          <thead>
+            <tr><th class="text-center" colspan="2" scope="colgroup">
+              <h5 class="text-info">Account: Testnet03</h5>
+            </th></tr>
+          </thead>
+          <tbody>
+            <tr><th>Address:</th><td>rnbsExCdXV2y85Qg9ewKkuNsuQGGjDBfBC</td></tr>
+            <tr><th>Balance:</th><td>32.923212 XRP</td></tr>
+          </tbody>
+        </table>
+
+        <!-- Account #3 Transactions -->
+        <div class="card bg-dark text-light" id="accountTrans03">
+          <div class="card-body">
+            <div class="card-text overflow-auto trans-list">
+              <p class="col-sent">13/08/2021 10:25:32 > 95.000000 XRP Sent</p>
+              <p class="col-received">13/08/2021 10:25:12 > 195.000000 XRP Received</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Transaction Info Panel -->
+  <section class="container-fluid mb-4">
+    <div class="row justify-content-start">
+      <!-- Selected Transaction -->
+      <div class="col-6 border">
+        <table class="table table-sm table-dark" id="transShow">
+          <thead>
+            <tr><th class="text-center" colspan="2" scope="colgroup">
+              <h5 class="text-info">Transaction: Testnet01 @ 13/08/2021 10:25:32
+                <button type="button" class="float-end btn-close bg-light h6 my-1" id="transClose"></button>
+              </h5>
+            </th></tr>
+          </thead>
+          <tbody>
+            <tr><th>ID:</th><td>7805CFF4DC492369C99F7DE513FB655C706F3856A16A7CA40F9892B4E0B3B0E2</td></tr>
+            <tr><th>From/To:</th><td>rhacBEhAdTBeuwcXe5ArVnX8Kwh886poSo TO rnbsExCdXV2y85Qg9ewKkuNsuQGGjDBfBC</td></tr>
+            <tr><th>Amount:</th><td>95.12345 XRP (+Fee: 0.000012 XRP)</td></tr>
+            <tr><th>Result:</th><td class="col-success">tesSUCCESS</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Settings Modal -->
+  <div class="modal fade text-dark" id="settingsModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalTitle">Settings</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <!-- Modal Settings Form -->
+        <div class="modal-body">
+          <form>
+            <!-- XRP Server -->
+            <div class="input-group mb-3">
+              <label class="input-group-text" for="XRPServer">XRP Server:</label>
+              <select class="form-select" id="XRPServer">
+                <option value="wss://xrplcluster.com/" selected>Mainnet</option>
+                <option value="wss://s.altnet.rippletest.net/">Testnet</option>
+                <option value="ws://localhost:6006/">Localnet</option>
+              </select>
+            </div>
+            <hr />
+
+            <!-- Account 1 -->
+            <p class="input-group-text">Account 1</p>
+            <div class="input-group mb-3">
+              <span class="input-group-text" id="labelName01">Name:</span>
+              <input type="text" class="form-control" id="accountName01" placeholder="Account 1 Name" aria-label="Name" aria-describedby="labelName01" />
+            </div>
+            <div class="input-group mb-3">
+              <span class="input-group-text" id="labelAddress01">Address:</span>
+              <input type="text" class="form-control" id="accountAddress01" placeholder="Account 1 Address" aria-label="Address" aria-describedby="labelAddress01" />
+            </div>
+            <hr />
+
+            <!-- Account 2 -->
+            <p class="input-group-text">Account 2</p>
+            <div class="input-group mb-3">
+              <span class="input-group-text" id="labelName02">Name:</span>
+              <input type="text" class="form-control" id="accountName02" placeholder="Account 2 Name" aria-label="Name" aria-describedby="labelName02" />
+            </div>
+            <div class="input-group mb-3">
+              <span class="input-group-text" id="labelAddress02">Address:</span>
+              <input type="text" class="form-control" id="accountAddress02" placeholder="Account 2 Address" aria-label="Address" aria-describedby="labelAddress02" />
+            </div>
+            <hr />
+
+            <!-- Account 3 -->
+            <p class="input-group-text">Account 3</p>
+            <div class="input-group mb-3">
+              <span class="input-group-text" id="labelName03">Name:</span>
+              <input type="text" class="form-control" id="accountName03" placeholder="Account 3 Name" aria-label="Name" aria-describedby="labelName03" />
+            </div>
+            <div class="input-group mb-3">
+              <span class="input-group-text" id="labelAddress03">Address:</span>
+              <input type="text" class="form-control" id="accountAddress03" placeholder="Account 3 Address" aria-label="Address" aria-describedby="labelAddress03" />
+            </div>
+
+          </form>          
+        </div>
+
+        <!-- Modal Footer Buttons -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary">Save changes</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Bootstrap JavaScript -->
+  <script src="../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Monitor JavaScript -->
+  <script src="./js/monitor.js"></script>
+</body>
+
+</html>

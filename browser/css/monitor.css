@@ -1,0 +1,36 @@
+/* StyleSheet for Monitor App */
+
+
+/* Transaction List */
+.trans-list {
+  max-height: 100px;
+}
+
+/* Custom Colours */
+.col-danger {
+  color: red;
+}
+
+.col-success {
+  color:greenyellow;
+}
+
+.col-info {
+  color: burlywood;
+}
+
+.col-sent {
+  color: lightsalmon;
+}
+
+.bg-col-sent {
+  background-color: lightsalmon;
+}
+
+.col-received {
+  color: lightskyblue;
+}
+
+.bg-col-received {
+  background-color: lightskyblue;
+}

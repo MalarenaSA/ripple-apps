@@ -25,6 +25,7 @@
     "eslint-plugin-html": "^6.1.2"
   },
   "dependencies": {
+    "bootstrap": "^5.1.0",
     "dotenv": "^10.0.0",
     "lodash": "^4.17.21",
     "ripple-lib": "^1.9.8"
