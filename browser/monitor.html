@@ -24,22 +24,32 @@
     <div class="row">
       <!-- Link to XRPL Explorer -->
       <div class="col-3 text-start">
-        <a href="https://livenet.xrpl.org/" target="blank">
+        <a href="https://livenet.xrpl.org/" target="_blank">
           <img class="py-3" src="./images/xrplLedger.svg" alt="XRPL Explorer Logo" />
         </a>
       </div>
 
-      <!-- Title -->
+      <!-- Title & Status -->
       <div class="col-6 text-center">
         <h2 class="display-5">Ripple XRP Monitor</h2>
-        <p id="status"></p>
+        <p id="status">
+          <!-- Placeholder for Status Information -->
+          Awaiting connection...
+        </p>
       </div>
 
-      <!-- Link to Settings Modal -->
+      <!-- Links to Refresh Button & Settings Modal -->
       <div class="col-3 text-end">
-        <a href="#" data-bs-toggle="modal" data-bs-target="#settingsModal">
-          <img class="py-3" src="./images/gear.svg" alt="Settings" />
-        </a>
+        <span data-bs-toggle="tooltip" data-bs-placement="bottom" title="Refresh">
+          <a class="link-dark" href="#">
+            <img class="px-3" src="./images/arrow-repeat.svg" alt="Repeat" />
+          </a>
+        </span>
+        <span data-bs-toggle="tooltip" data-bs-placement="bottom" title="Settings">
+          <a class="link-dark" href="#" data-bs-toggle="modal" data-bs-target="#settingsModal">
+            <img class="py-3" src="./images/gear.svg" alt="Settings" />
+          </a>
+        </span>
       </div>
 
     </div>
@@ -48,7 +58,7 @@
   <!-- Server & Ledger Info Panel -->
   <section class="container mb-5">
     <div class="row justify-content-evenly">
-      <!-- Server Status -->
+      <!-- Server Info -->
       <div class="col-4 border">
         <table class="table table-sm table-dark" id="serverStatus">
           <thead>
@@ -56,16 +66,14 @@
               <h4 class="text-info">Server Status</h4>
             </th></tr>
           </thead>
-          <tbody>
-            <tr><th>Server Hostname:</th><td>server-gvcrwd3 (Mainnet)</td></tr>
-            <tr><th>State:</th><td class="col-success">Full</td></tr>
-            <tr><th>Latest Ledger:</th><td>20061780</td></tr>
-            <tr><th>Ledgers Available:</th><td>18585956-20061780</td></tr>
+          <tbody id="serverInfo">
+            <!-- Placeholder for Server Info -->
+            <tr><td>Awaiting Server Information...</td></tr>
           </tbody>
         </table>
       </div>
 
-      <!-- Ledger Status -->
+      <!-- Ledger Info -->
       <div class="col-4 border">
         <table class="table table-sm table-dark" id="ledgerStatus">
           <thead>
@@ -73,11 +81,9 @@
               <h4 class="text-info">Ledger Status</h4>
             </th></tr>
           </thead>
-          <tbody>
-            <tr><th>Ledger Version:</th><td>20061780</td></tr>
-            <tr><th>Age:</th><td class="col-danger">0.418s</td></tr>
-            <tr><th>Close Time:</th><td>12/08/2021 16:48:30</td></tr>
-            <tr><th>Current Fee:</th><td>0.000012 XRP</td></tr>
+          <tbody id="ledgerInfo">
+            <!-- Placeholder for Ledger Info -->
+            <tr><td>Awaiting Ledger Information...</td></tr>
           </tbody>
         </table>
       </div>
@@ -90,16 +96,9 @@
     <div class="row">
       <!-- Account #1 -->
       <div class="col-4 border">
-        <table class="table table-sm table-dark" id="accountStatus01">
-          <thead>
-            <tr><th class="text-center" colspan="2" scope="colgroup">
-              <h5 class="text-info">Account: Testnet01</h5>
-            </th></tr>
-          </thead>
-          <tbody>
-            <tr><th>Address:</th><td>rww9WLeWwviNvAJV3QeRCof3kJLomPnaNw</td></tr>
-            <tr><th>Balance:</th><td>92.123456 XRP</td></tr>
-          </tbody>
+        <table class="table table-sm table-dark account-info">
+          <!-- Placeholder for Account #1 Info -->
+          <tr><td>Awaiting Account #1 Information...</td></tr>
         </table>
 
         <!-- Account #1 Transactions -->
@@ -117,16 +116,9 @@
 
       <!-- Account #2 -->
       <div class="col-4 border">
-        <table class="table table-sm table-dark" id="accountStatus02">
-          <thead>
-            <tr><th class="text-center" colspan="2" scope="colgroup">
-              <h5 class="text-info">Account: Testnet02</h5>
-            </th></tr>
-          </thead>
-          <tbody>
-            <tr><th>Address:</th><td>rhacBEhAdTBeuwcXe5ArVnX8Kwh886poSo</td></tr>
-            <tr><th>Balance:</th><td>100.000000 XRP</td></tr>
-          </tbody>
+        <table class="table table-sm table-dark account-info">
+          <!-- Placeholder for Account #2 Info -->
+          <tr><td>Awaiting Account #2 Information...</td></tr>
         </table>
 
         <!-- Account #2 Transactions -->
@@ -142,16 +134,9 @@
 
       <!-- Account #3 -->
       <div class="col-4 border">
-        <table class="table table-sm table-dark" id="accountStatus03">
-          <thead>
-            <tr><th class="text-center" colspan="2" scope="colgroup">
-              <h5 class="text-info">Account: Testnet03</h5>
-            </th></tr>
-          </thead>
-          <tbody>
-            <tr><th>Address:</th><td>rnbsExCdXV2y85Qg9ewKkuNsuQGGjDBfBC</td></tr>
-            <tr><th>Balance:</th><td>32.923212 XRP</td></tr>
-          </tbody>
+        <table class="table table-sm table-dark account-info">
+          <!-- Placeholder for Account #3 Info -->
+          <tr><td>Awaiting Account #3 Information...</td></tr>
         </table>
 
         <!-- Account #3 Transactions -->
@@ -268,8 +253,11 @@
   <!-- Bootstrap JavaScript -->
   <script src="../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
+  <!-- bignumber.js JavaScript -->
+  <script src="../node_modules/bignumber.js/bignumber.min.js"></script>
+
   <!-- Monitor JavaScript -->
-  <script src="./js/monitor.js"></script>
+  <script src="./js/monitor.js" defer></script>
 </body>
 
 </html>
