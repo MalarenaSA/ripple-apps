@@ -1,16 +1,7 @@
 /* StyleSheet for Monitor App */
 
-
-/* Transaction List */
-.trans-list {
-  max-height: 100px;
-}
-
-/* Capitalise */
-
-
 /* Custom Colours */
-.col-danger {
+.col-error {
   color: red;
 }
 
@@ -22,18 +13,55 @@
   color: burlywood;
 }
 
-.col-sent {
+
+/* Transaction List */
+.account-trans {
+  max-height: 100px;
+}
+
+
+/* Transaction Links */
+.trans-sent {
   color: lightsalmon;
+  text-decoration: none;
 }
 
-.bg-col-sent {
+.trans-sent:hover, .trans-sent:active {
   background-color: lightsalmon;
+  color: black;
 }
 
-.col-received {
+.trans-received {
   color: lightskyblue;
+  text-decoration: none;
 }
 
-.bg-col-received {
+.trans-received:hover, .trans-received:active {
   background-color: lightskyblue;
+  color: black;
+}
+
+.trans-error {
+  color: red;
+  text-decoration: none;
+}
+
+.trans-error:hover, .trans-error:active {
+  background-color: red;
+  color: black;
+}
+
+.trans-non-payment {
+  color: violet;
+  text-decoration: none;
+}
+
+.trans-non-payment:hover, .trans-info:active {
+  background-color: violet;
+  color: black;
+}
+
+/* Transaction Info Section */
+#transInfo {
+  visibility: hidden;
 }
