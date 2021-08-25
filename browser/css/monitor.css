@@ -16,7 +16,7 @@
 
 /* Transaction List */
 .account-trans {
-  max-height: 100px;
+  max-height: 110px;
 }
 
 
@@ -26,9 +26,10 @@
   text-decoration: none;
 }
 
-.trans-sent:hover, .trans-sent:active {
+.trans-sent:hover, .trans-sent-selected, .trans-sent-selected:hover {
   background-color: lightsalmon;
   color: black;
+  text-decoration: none;
 }
 
 .trans-received {
@@ -36,9 +37,10 @@
   text-decoration: none;
 }
 
-.trans-received:hover, .trans-received:active {
+.trans-received:hover, .trans-received-selected, .trans-received-selected:hover {
   background-color: lightskyblue;
   color: black;
+  text-decoration: none;
 }
 
 .trans-error {
@@ -46,9 +48,10 @@
   text-decoration: none;
 }
 
-.trans-error:hover, .trans-error:active {
+.trans-error:hover, .trans-error-selected, .trans-error-selected:hover {
   background-color: red;
   color: black;
+  text-decoration: none;
 }
 
 .trans-non-payment {
@@ -56,9 +59,10 @@
   text-decoration: none;
 }
 
-.trans-non-payment:hover, .trans-info:active {
+.trans-non-payment:hover, .trans-info-selected, .trans-info-selected:hover {
   background-color: violet;
   color: black;
+  text-decoration: none;
 }
 
 /* Transaction Info Section */

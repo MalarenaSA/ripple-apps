@@ -32,10 +32,7 @@
       <!-- Title & Status -->
       <div class="col-6 text-center">
         <h2 class="display-5">Ripple XRP Monitor</h2>
-        <p id="status">
-          <!-- Placeholder for Status Information -->
-          Awaiting connection...
-        </p>
+        <p id="status"><!-- Placeholder for Status Information --><span class="col-info">Awaiting connection...</span></p>
       </div>
 
       <!-- Links to Refresh Button & Settings Modal -->
@@ -68,7 +65,7 @@
           </thead>
           <tbody id="serverInfo">
             <!-- Placeholder for Server Info -->
-            <tr><td>Awaiting Server Information...</td></tr>
+            <tr><td class="col-info">Awaiting Server Information...</td></tr>
           </tbody>
         </table>
       </div>
@@ -83,7 +80,7 @@
           </thead>
           <tbody id="ledgerInfo">
             <!-- Placeholder for Ledger Info -->
-            <tr><td>Awaiting Ledger Information...</td></tr>
+            <tr><td class="col-info">Awaiting Ledger Information...</td></tr>
           </tbody>
         </table>
       </div>
@@ -98,18 +95,14 @@
       <div class="col-4 border">
         <table class="table table-sm table-dark account-info">
           <!-- Placeholder for Account #0 Info -->
-          <tr><td>Awaiting Account Information...</td></tr>
+          <tr><td class="col-info">Awaiting Account Information...</td></tr>
         </table>
 
         <div class="card bg-dark text-light">
-          <div class="card-body">
+          <div class="card-body py-1">
             <div class="card-text overflow-auto account-trans">
               <!-- Placeholder for Account #0 Transactions -->
-              <p>Awaiting Transaction Subscription...</p>
-              <!--
-                <p class="col-received">13/08/2021 10:25:12 > 195.000000 XRP Received</p>
-                <p class="col-sent">13/08/2021 10:25:32 > 95.000000 XRP Sent</p>
-              -->
+              <p class="col-info">Awaiting Transaction Subscription...</p>
             </div>
           </div>
         </div>
@@ -119,14 +112,14 @@
       <div class="col-4 border">
         <table class="table table-sm table-dark account-info">
           <!-- Placeholder for Account #1 Info -->
-          <tr><td>Awaiting Account Information...</td></tr>
+          <tr><td class="col-info">Awaiting Account Information...</td></tr>
         </table>
 
         <div class="card bg-dark text-light">
-          <div class="card-body">
+          <div class="card-body py-1">
             <div class="card-text overflow-auto account-trans">
               <!-- Placeholder for Account #1 Transactions -->
-              <p>Awaiting Transaction Subscription...</p>
+              <p class="col-info">Awaiting Transaction Subscription...</p>
             </div>
           </div>
         </div>
@@ -136,14 +129,14 @@
       <div class="col-4 border">
         <table class="table table-sm table-dark account-info">
           <!-- Placeholder for Account #2 Info -->
-          <tr><td>Awaiting Account Information...</td></tr>
+          <tr><td class="col-info">Awaiting Account Information...</td></tr>
         </table>
 
         <div class="card bg-dark text-light">
-          <div class="card-body">
+          <div class="card-body py-1">
             <div class="card-text overflow-auto account-trans">
               <!-- Placeholder for Account #2 Transactions -->
-              <p>Awaiting Transaction Subscription...</p>
+              <p class="col-info">Awaiting Transaction Subscription...</p>
             </div>
           </div>
         </div>
@@ -154,26 +147,7 @@
 
   <!-- Transaction Info Panel -->
   <section class="container-fluid mb-4" id="transInfo">
-    <div class="row justify-content-start">
-      <!-- Selected Transaction -->
-      <div class="col-6 border">
-        <table class="table table-sm table-dark">
-          <thead>
-            <tr><th class="text-center" colspan="2" scope="colgroup">
-              <h5 class="text-info">Transaction: Testnet01 @ 13/08/2021 10:25:32
-                <button type="button" class="float-end btn-close bg-light h6 my-1" id="transClose"></button>
-              </h5>
-            </th></tr>
-          </thead>
-          <tbody>
-            <tr><th>ID:</th><td>7805CFF4DC492369C99F7DE513FB655C706F3856A16A7CA40F9892B4E0B3B0E2</td></tr>
-            <tr><th>From/To:</th><td>rhacBEhAdTBeuwcXe5ArVnX8Kwh886poSo TO rnbsExCdXV2y85Qg9ewKkuNsuQGGjDBfBC</td></tr>
-            <tr><th>Amount:</th><td>95.12345 XRP (+Fee: 0.000012 XRP)</td></tr>
-            <tr><th>Result:</th><td class="col-success">tesSUCCESS</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <!-- Placeholder for Selected Transaction -->
   </section>
 
   <!-- Settings Modal -->
