@@ -54,12 +54,12 @@
   text-decoration: none;
 }
 
-.trans-non-payment {
+.trans-other {
   color: violet;
   text-decoration: none;
 }
 
-.trans-non-payment:hover, .trans-info-selected, .trans-info-selected:hover {
+.trans-other:hover, .trans-other-selected, .trans-other-selected:hover {
   background-color: violet;
   color: black;
   text-decoration: none;

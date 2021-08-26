@@ -31,25 +31,26 @@ const LOG_TRANS = true;  // Flag to output transaction data to console
 let currentServer = "Testnet";  // Current Server -- TODO: GET FROM LOCAL STORAGE
 let currentServerURL = SERVERS[currentServer];  // Current Server URL to connect to
 let reserveBaseXRP = 0;  // Minimum XRP Reserve per account
+let reserveIncXRP = 0;  // Incremental XRP per Object owned
 let awaitingMsgs = {};  // Awaiting Messages
 let receivedTrans = {};  // Received Transactions
 let currentTrans = "";  // Current Selected Transaction
 let messageID = 0;  // Specific message ID
 let currentAccounts = [{  // Current Accounts -- TODO: GET FROM LOCAL STORAGE
   "name": "New",
-  "address": "rsCXXu88g3LtHgVmVj1obnY6gzvUdRyxZN",
+  "address": "CONTINUE TESTING TESTNET TOOL",
   "transClass": "justify-content-start",
 }, {
   "name": "Testnet02",
   "address": "rhacBEhAdTBeuwcXe5ArVnX8Kwh886poSo",
   "transClass": "justify-content-center",
 }, {
-  "name": "Faucet",
-  "address": "rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe",
+  "name": "Testnet03",
+  "address": "rnbsExCdXV2y85Qg9ewKkuNsuQGGjDBfBC",
   "transClass": "justify-content-end",
 }];
 
-// rsCXXu88g3LtHgVmVj1obnY6gzvUdRyxZN  - NEW
+
 // rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe  - Faucet
 // rfyJRyFZzX71LL5LreHpUZBZqrB18xUL4P  - Offers
 // rww9WLeWwviNvAJV3QeRCof3kJLomPnaNw  - Testnet01
@@ -196,8 +197,9 @@ async function getServerInfo() {
   }
   showStatus("col-success", "Connected");
 
-  // Store Reserve XRP to global variable
+  // Store Reserve XRP & Incremental XRP to global variable
   reserveBaseXRP = response.result.info.validated_ledger.reserve_base_xrp;
+  reserveIncXRP = response.result.info.validated_ledger.reserve_inc_xrp;
 
   // Calculate Current Fee
   const currentFee = response.result.info.validated_ledger.base_fee_xrp * response.result.info.load_factor;
@@ -268,14 +270,16 @@ function getAccountsInfo() {
 
     // Calculate Balance in XRP and set class
     const accBalXRP = convertDropsToXRP(response.result.account_data.Balance);
+    const accReserveXRP = (reserveBaseXRP + (reserveIncXRP * response.result.account_data.OwnerCount));
     let accBalClass = "";
-    if (accBalXRP.lte(reserveBaseXRP)) {
+    if (accBalXRP.lte(accReserveXRP)) {
       accBalClass = "col-error";
-    } else if (accBalXRP.gt(reserveBaseXRP) && accBalXRP.lte(reserveBaseXRP * 2)) {
+    } else if (accBalXRP.gt(accReserveXRP) && accBalXRP.lte(accReserveXRP * 2)) {
       accBalClass = "text-warning";
     } else {
       accBalClass = "col-success";
     }
+    const accBalXRPText = new Intl.NumberFormat("en-GB", {minimumFractionDigits: 6}).format(accBalXRP.toFixed(6));
 
     // Update Account Info Table
     accountInfoEls[index].innerHTML = `
@@ -286,7 +290,7 @@ function getAccountsInfo() {
       </thead>
       <tbody>
         <tr><th>Address:</th><td>${account.address}</td></tr>
-        <tr><th>Balance:</th><td><span class=${accBalClass}>${accBalXRP.toFixed(6)}</span> XRP as at Ledger '${response.result.ledger_index}'</td></tr>
+        <tr><th>Balance:</th><td><span class=${accBalClass}>${accBalXRPText}</span> XRP (Reserve: ${accReserveXRP}) as at Ledger '${response.result.ledger_index}'</td></tr>
       </tbody>
     `;
   });
@@ -330,6 +334,7 @@ function processTransaction(data) {
   
     // Fix Transaction Delivered Amount
     const transAmtXRP = convertDropsToXRP(data.meta.delivered_amount);
+    const transAmtXRPText = new Intl.NumberFormat("en-GB", {minimumFractionDigits: 6}).format(transAmtXRP.toFixed(6));
   
     // Loop over accounts and output transaction details for relevant account
     let accountFound = false;
@@ -347,7 +352,7 @@ function processTransaction(data) {
         // Create new <p> and <a> elements and populate with default values
         const newTransItem = document.createElement("p");
         const newTransLink = document.createElement("a");
-        newTransLink.href = "#";
+        newTransLink.href = "#transInfo";
         newTransLink.className = "px-2";
         // Add Data Attributes for Transaction Hash, Account Index & Trans Type
         const dataHash = document.createAttribute("data-hash");
@@ -367,21 +372,21 @@ function processTransaction(data) {
   
         } else if (data.transaction.TransactionType !== "Payment" || typeof data.meta.delivered_amount !== "string") {
           // Non-XRP Payment Sent
-          newTransLink.classList.add("trans-non-payment");
+          newTransLink.classList.add("trans-other");
           newTransLink.textContent = `${transDate} > Non-XRP Payment ${transText}`;
   
         } else {
           // Show Sent Payment Transaction
           newTransLink.classList.add(`trans-${transText.toLowerCase()}`);
-          newTransLink.textContent = `${transDate} > ${transAmtXRP.toFixed(6)} XRP ${transText}`;
+          newTransLink.textContent = `${transDate} > ${transAmtXRPText} XRP ${transText}`;
         }
   
+        // Add "click" Event Listener to new item
+        newTransLink.addEventListener("click", showTransaction);
+
         // Update Transaction List with new item
         newTransItem.appendChild(newTransLink);
         accountTransEls[index].prepend(newTransItem);
-  
-        // Add "click" Event Listener to new item
-        accountTransEls[index].addEventListener("click", showTransaction);
       }
     });
 
@@ -407,11 +412,9 @@ function processTransaction(data) {
 function showTransaction(event) {
   // Check if currentTrans already selected and if so close it
   if (currentTrans !== "") {
-    closeTransaction();
-
-    // STILL PROBLEM HERE - CANNOT READ PROPERTY IF PROPERLY CLOSED
-    
+    closeTransaction();    
   }
+
   currentTrans = event.target;
   const transHash = event.target.dataset.hash;
   const transData = receivedTrans[transHash];
@@ -421,14 +424,32 @@ function showTransaction(event) {
   // Fix Transaction Date
   const transDate = fixDate(new Date((RIPPLE_EPOCH + transData.transaction.date) * 1000));
 
-  // Calculate Transaction Amount
-  const transAmount = (Object.prototype.hasOwnProperty.call(transData.meta, "delivered_amount")) ? convertDropsToXRP(transData.meta.delivered_amount) : 0;
+  // Calculate Transaction Amount & Currency
+  let partialText = "";
+  let transAmountText = "0.000000";
+  let transCurrency = "XRP";
+  if (Object.prototype.hasOwnProperty.call(transData.meta, "delivered_amount")) {
+    if (typeof transData.meta.delivered_amount === "string") {
+      // XRP was Delivered
+      let transAmount = convertDropsToXRP(transData.meta.delivered_amount);
+      transAmountText = new Intl.NumberFormat("en-GB", {minimumFractionDigits: 6}).format(transAmount.toFixed(6));
+      // Check for Partial Payment
+      if (transData.meta.delivered_amount !== transData.transaction.Amount) {
+        partialText = `<span class="col-info">- Partial Payment</span>`;
+      }
+    } else {
+      // Other Currency Delivered
+      let transAmount = transData.meta.delivered_amount.value;
+      transAmountText = new Intl.NumberFormat("en-GB", {minimumFractionDigits: 2}).format(transAmount);
+      transCurrency = transData.meta.delivered_amount.currency;
+    }
+  }
 
   // Calculate Fee Amount if Type is "Sent"
   let feeText = "";
   if (transType === "Sent") {
     const transFee = convertDropsToXRP(transData.transaction.Fee);
-    feeText = ` (+Fee: ${transFee.toFixed(6)} XRP)`;
+    feeText = `(+Fee: ${transFee.toFixed(6)} XRP)`;
   }
 
   // Get Result Class
@@ -450,7 +471,7 @@ function showTransaction(event) {
             <tr><th>Type:</th><td>${transData.transaction.TransactionType} (${transType})</td></tr>
             <tr><th>Hash:</th><td>${transHash}</td></tr>
             <tr><th>From/To:</th><td>${transData.transaction.Account} TO ${transData.transaction.Destination}</td></tr>
-            <tr><th>Amount:</th><td>${transAmount.toFixed(6)} XRP${feeText}</td></tr>
+            <tr><th>Amount:</th><td>${transAmountText} ${transCurrency} ${feeText} ${partialText}</td></tr>
             <tr><th>Result:</th><td class="${resultClass}">${transData.meta.TransactionResult} - ${transData.engine_result_message}</td></tr>
           </tbody>
         </table>
@@ -459,22 +480,16 @@ function showTransaction(event) {
   `;
 
   // Set class of selected transaction
-  currentTrans.classList.remove(`trans-${transType.toLowerCase()}`);
-  currentTrans.classList.add(`trans-${transType.toLowerCase()}-selected`);
+  currentTrans.classList.forEach((curClass) => {
+    if (curClass.startsWith("trans")) {
+      currentTrans.classList.remove(`${curClass}`);
+      currentTrans.classList.add(`${curClass}-selected`);
+    }
+  });
 
   // Add Close Button Event Listener
   const transCloseBtn = document.getElementById("transCloseBtn");
   transCloseBtn.addEventListener("click", closeTransaction);
-
-  // Function for Transaction Close Button
-  function closeTransaction() {
-    // Hide Transaction Info Section
-    transInfoEl.style.visibility = "hidden";
-    // Re-Set class of selected transaction & clear currentTrans
-    currentTrans.classList.remove(`trans-${currentTrans.dataset.type.toLowerCase()}-selected`);
-    currentTrans.classList.add(`trans-${currentTrans.dataset.type.toLowerCase()}`);
-    currentTrans = "";
-  }
 
   // Show Transaction Info Section
   transInfoEl.style.visibility = "visible";
@@ -500,4 +515,21 @@ function convertDropsToXRP(drops) {
   const amtDrops = new BigNumber(drops);
   const amtXRP = amtDrops.div(1e6);
   return amtXRP;
+}
+
+// Function for to close an open Transaction Section
+function closeTransaction() {
+  // Hide Transaction Info Section
+  transInfoEl.style.visibility = "hidden";
+  // Re-Set class of selected transaction
+  currentTrans.classList.forEach((curClass) => {
+    if (curClass.startsWith("trans")) {
+      let origClass = curClass.slice(0, curClass.indexOf("-", 6));
+      currentTrans.classList.remove(`${curClass}`);
+      currentTrans.classList.add(`${origClass}`);
+    }
+  });
+  // Clear Transaction
+  currentTrans = "";
+  transInfoEl.innerHTML = "<!-- Placeholder for Selected Transaction -->";
 }
