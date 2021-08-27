@@ -38,7 +38,7 @@ let currentTrans = "";  // Current Selected Transaction
 let messageID = 0;  // Specific message ID
 let currentAccounts = [{  // Current Accounts -- TODO: GET FROM LOCAL STORAGE
   "name": "New",
-  "address": "CONTINUE TESTING TESTNET TOOL",
+  "address": "rMs8FZoS5XebAezcgsQJMivWiXa6TrBKSc",
   "transClass": "justify-content-start",
 }, {
   "name": "Testnet02",
@@ -274,7 +274,7 @@ function getAccountsInfo() {
     let accBalClass = "";
     if (accBalXRP.lte(accReserveXRP)) {
       accBalClass = "col-error";
-    } else if (accBalXRP.gt(accReserveXRP) && accBalXRP.lte(accReserveXRP * 2)) {
+    } else if (accBalXRP.gt(accReserveXRP) && accBalXRP.lte(accReserveXRP + reserveBaseXRP)) {
       accBalClass = "text-warning";
     } else {
       accBalClass = "col-success";
@@ -320,7 +320,7 @@ async function subscribeActTrans() {
 }
 
 
-// Function to process a Websocket Transaction
+// Function to process a Websocket Transaction and display it under relevant account
 function processTransaction(data) {
   try {
     // Store Transaction Data for future use & output to console
@@ -332,10 +332,6 @@ function processTransaction(data) {
     // Fix Transaction Date
     const transDate = fixDate(new Date((RIPPLE_EPOCH + data.transaction.date) * 1000));
   
-    // Fix Transaction Delivered Amount
-    const transAmtXRP = convertDropsToXRP(data.meta.delivered_amount);
-    const transAmtXRPText = new Intl.NumberFormat("en-GB", {minimumFractionDigits: 6}).format(transAmtXRP.toFixed(6));
-  
     // Loop over accounts and output transaction details for relevant account
     let accountFound = false;
     currentAccounts.forEach((account, index) => {
@@ -346,6 +342,17 @@ function processTransaction(data) {
       } else if (account.address === data.transaction.Destination) {
         transText = "Received";
         accountFound = true;
+      }
+
+      // Create Transaction item for Escrow Finish
+      if (data.transaction.TransactionType === "EscrowFinish" && transText === "") {
+        const node = data.meta.AffectedNodes.find((node) => {
+          return Object.prototype.hasOwnProperty.call(node, "DeletedNode");
+        });
+        if (account.address === node.DeletedNode.FinalFields.Destination) {
+          transText = "Received";
+          accountFound = true;
+        }
       }
   
       if (transText !== "") {
@@ -365,7 +372,12 @@ function processTransaction(data) {
         dataType.value = transText;
         newTransLink.setAttributeNode(dataType);
   
-        if (data.meta.TransactionResult !== "tesSUCCESS") {
+        if (data.validated !== true) {
+          // Transaction is not validated
+          newTransLink.classList.add("trans-error");
+          newTransLink.textContent = `${transDate} > ${transText} Transaction Not Validated!`;
+
+        } else if (data.meta.TransactionResult !== "tesSUCCESS") {
           // Failed Transaction
           newTransLink.classList.add("trans-error");
           newTransLink.textContent = `${transDate} > ${transText} Transaction Failed!`;
@@ -376,6 +388,9 @@ function processTransaction(data) {
           newTransLink.textContent = `${transDate} > Non-XRP Payment ${transText}`;
   
         } else {
+          // Fix Transaction Delivered Amount for Payment Transaction
+          const transAmtXRP = convertDropsToXRP(data.meta.delivered_amount);
+          const transAmtXRPText = new Intl.NumberFormat("en-GB", {minimumFractionDigits: 6}).format(transAmtXRP.toFixed(6));
           // Show Sent Payment Transaction
           newTransLink.classList.add(`trans-${transText.toLowerCase()}`);
           newTransLink.textContent = `${transDate} > ${transAmtXRPText} XRP ${transText}`;
@@ -423,33 +438,84 @@ function showTransaction(event) {
 
   // Fix Transaction Date
   const transDate = fixDate(new Date((RIPPLE_EPOCH + transData.transaction.date) * 1000));
-
-  // Calculate Transaction Amount & Currency
-  let partialText = "";
-  let transAmountText = "0.000000";
-  let transCurrency = "XRP";
-  if (Object.prototype.hasOwnProperty.call(transData.meta, "delivered_amount")) {
-    if (typeof transData.meta.delivered_amount === "string") {
-      // XRP was Delivered
-      let transAmount = convertDropsToXRP(transData.meta.delivered_amount);
-      transAmountText = new Intl.NumberFormat("en-GB", {minimumFractionDigits: 6}).format(transAmount.toFixed(6));
-      // Check for Partial Payment
-      if (transData.meta.delivered_amount !== transData.transaction.Amount) {
-        partialText = `<span class="col-info">- Partial Payment</span>`;
-      }
-    } else {
-      // Other Currency Delivered
-      let transAmount = transData.meta.delivered_amount.value;
-      transAmountText = new Intl.NumberFormat("en-GB", {minimumFractionDigits: 2}).format(transAmount);
-      transCurrency = transData.meta.delivered_amount.currency;
-    }
+  
+  // Calculate Fee Amount if transType is "Sent"
+  let transFee = "0";
+  let transFeeText = "";
+  if (transType === "Sent") {
+    transFee = convertDropsToXRP(transData.transaction.Fee);
+    transFeeText = `(+Fee: ${transFee.toFixed(6)} XRP)`;
   }
 
-  // Calculate Fee Amount if Type is "Sent"
-  let feeText = "";
-  if (transType === "Sent") {
-    const transFee = convertDropsToXRP(transData.transaction.Fee);
-    feeText = `(+Fee: ${transFee.toFixed(6)} XRP)`;
+  // Calculate Transaction Amount, Currency & Affected Accounts based on TransactionType
+  let transAmountComment = "";
+  let transAmountText = "0.000000";
+  let transCurrency = "XRP";
+  if (transData.transaction.TransactionType === "Payment") {
+    // Process a Payment Transaction
+    if (Object.prototype.hasOwnProperty.call(transData.meta, "delivered_amount")) {
+      if (typeof transData.meta.delivered_amount === "string") {
+        // XRP was Delivered
+        let transAmount = convertDropsToXRP(transData.meta.delivered_amount);
+        transAmountText = new Intl.NumberFormat("en-GB", {minimumFractionDigits: 6}).format(transAmount.toFixed(6));
+        // Check for Partial Payment
+        if (transData.meta.delivered_amount !== transData.transaction.Amount) {
+          transAmountComment = `<span class="col-info">- Partial Payment</span>`;
+        }
+      } else {
+        // Other Currency Delivered
+        let transAmount = transData.meta.delivered_amount.value;
+        transAmountText = new Intl.NumberFormat("en-GB", {minimumFractionDigits: 2}).format(transAmount);
+        transCurrency = transData.meta.delivered_amount.currency;
+      }
+    }
+  } else if (["PaymentChannelClaim", "PaymentChannelFund", "OfferCreate", "CheckCash", "EscrowCreate", "EscrowFinish"].includes(transData.transaction.TransactionType)) {
+    // Process a non-payment transaction that contains balance changes
+    try {
+      const affectedNodes = transData.meta.AffectedNodes;
+      // Loop through Affected Nodes to find any balance change for current account
+      let accountFound = false;
+      affectedNodes.forEach((affectedNode) => {
+        if (Object.prototype.hasOwnProperty.call(affectedNode, "ModifiedNode") && Object.prototype.hasOwnProperty.call(affectedNode.ModifiedNode, "FinalFields")) {
+          // Transaction has modified an existing node for an Account
+          const modifiedNode = affectedNode.ModifiedNode;
+          if (modifiedNode.LedgerEntryType === "AccountRoot" && modifiedNode.FinalFields.Account === currentAccounts[accountIndex].address) {
+            // Transaction has modified an account and it is the selected account
+            if (Object.prototype.hasOwnProperty.call(modifiedNode.PreviousFields, "Balance")) {
+              // Check PreviousFields.Balance exists as if not then balance did not change
+              let transAmount = getDifferenceXRP(modifiedNode.PreviousFields.Balance, modifiedNode.FinalFields.Balance, transFee);
+              transAmountText = new Intl.NumberFormat("en-GB", {minimumFractionDigits: 6}).format(transAmount.toFixed(6));
+              accountFound = true;
+            }
+          }
+        } else if (Object.prototype.hasOwnProperty.call(affectedNode, "CreatedNode")) {
+          // Transaction has created new node, so maybe account was funded or was sent Escrow
+          const createdNode = affectedNode.CreatedNode;
+          if (createdNode.LedgerEntryType === "AccountRoot" && createdNode.NewFields.Account === currentAccounts[accountIndex].address) {
+            // Transaction has created an account and it is the selected account
+            let transAmount = convertDropsToXRP(createdNode.NewFields.Balance);
+            transAmountText = new Intl.NumberFormat("en-GB", {minimumFractionDigits: 6}).format(transAmount.toFixed(6));
+            accountFound = true;
+          } else if (createdNode.LedgerEntryType === "Escrow" && createdNode.NewFields.Destination === currentAccounts[accountIndex].address) {
+            // Transaction has created an Escrow and it is the selected account
+            let transAmount = convertDropsToXRP(createdNode.NewFields.Amount);
+            transAmountText = new Intl.NumberFormat("en-GB", {minimumFractionDigits: 6}).format(transAmount.toFixed(6));
+            transAmountComment = `<span class="col-info">- In Senders Escrow</span>`;
+            accountFound = true;
+          }
+        }  
+      });
+
+      // If current address not found then throw error
+      if (accountFound === false) {
+        throw new Error (`Did not find current address in transaction affected nodes`);
+      }
+
+    } catch (error) {
+      console.error(`Error displaying transaction: ${error}`);
+      // console.log(transData.meta.AffectedNodes);
+      showStatus("col-error", "Error. See console");
+    }
   }
 
   // Get Result Class
@@ -470,8 +536,8 @@ function showTransaction(event) {
           <tbody>
             <tr><th>Type:</th><td>${transData.transaction.TransactionType} (${transType})</td></tr>
             <tr><th>Hash:</th><td>${transHash}</td></tr>
-            <tr><th>From/To:</th><td>${transData.transaction.Account} TO ${transData.transaction.Destination}</td></tr>
-            <tr><th>Amount:</th><td>${transAmountText} ${transCurrency} ${feeText} ${partialText}</td></tr>
+            <tr><th>Account(s):</th><td>${transData.transaction.Account} TO ${transData.transaction.Destination}</td></tr>
+            <tr><th>Amount:</th><td>${transAmountText} ${transCurrency} ${transFeeText} ${transAmountComment}</td></tr>
             <tr><th>Result:</th><td class="${resultClass}">${transData.meta.TransactionResult} - ${transData.engine_result_message}</td></tr>
           </tbody>
         </table>
@@ -516,6 +582,20 @@ function convertDropsToXRP(drops) {
   const amtXRP = amtDrops.div(1e6);
   return amtXRP;
 }
+
+// Function to get drops difference in XRP
+function getDifferenceXRP(dropsPrev, dropsFinal, dropsFee) {
+  const amtDropsPrev = new BigNumber(dropsPrev);
+  const amtDropsFinal = new BigNumber(dropsFinal);
+  const amtDropsFee = new BigNumber(dropsFee);
+  const diffInDrops = amtDropsPrev.gt(amtDropsFinal) ?
+    amtDropsPrev.minus(amtDropsFinal).plus(amtDropsFee) :
+    amtDropsFinal.minus(amtDropsPrev).plus(amtDropsFee);
+  const diffInXRP = diffInDrops.div(1e6);
+  return diffInXRP;
+}
+
+// NOT WORKING ^^^
 
 // Function for to close an open Transaction Section
 function closeTransaction() {
