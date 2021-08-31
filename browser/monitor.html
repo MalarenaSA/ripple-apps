@@ -95,14 +95,14 @@
       <div class="col-4 border">
         <table class="table table-sm table-dark account-info">
           <!-- Placeholder for Account #0 Info -->
-          <tr><td class="col-info">Awaiting Account Information...</td></tr>
+          <tr><td class="col-info">Awaiting Account 0 Information...</td></tr>
         </table>
 
         <div class="card bg-dark text-light">
           <div class="card-body py-1">
             <div class="card-text overflow-auto account-trans">
               <!-- Placeholder for Account #0 Transactions -->
-              <p class="col-info">Awaiting Transaction Subscription...</p>
+              <p class="col-info">Awaiting Account 0 Transaction Subscription...</p>
             </div>
           </div>
         </div>
@@ -112,14 +112,14 @@
       <div class="col-4 border">
         <table class="table table-sm table-dark account-info">
           <!-- Placeholder for Account #1 Info -->
-          <tr><td class="col-info">Awaiting Account Information...</td></tr>
+          <tr><td class="col-info">Awaiting Account 1 Information...</td></tr>
         </table>
 
         <div class="card bg-dark text-light">
           <div class="card-body py-1">
             <div class="card-text overflow-auto account-trans">
               <!-- Placeholder for Account #1 Transactions -->
-              <p class="col-info">Awaiting Transaction Subscription...</p>
+              <p class="col-info">Awaiting Account 1 Transaction Subscription...</p>
             </div>
           </div>
         </div>
@@ -129,14 +129,14 @@
       <div class="col-4 border">
         <table class="table table-sm table-dark account-info">
           <!-- Placeholder for Account #2 Info -->
-          <tr><td class="col-info">Awaiting Account Information...</td></tr>
+          <tr><td class="col-info">Awaiting Account 2 Information...</td></tr>
         </table>
 
         <div class="card bg-dark text-light">
           <div class="card-body py-1">
             <div class="card-text overflow-auto account-trans">
               <!-- Placeholder for Account #2 Transactions -->
-              <p class="col-info">Awaiting Transaction Subscription...</p>
+              <p class="col-info">Awaiting Account 2 Transaction Subscription...</p>
             </div>
           </div>
         </div>
@@ -167,9 +167,9 @@
             <div class="input-group mb-3">
               <label class="input-group-text" for="XRPServer">XRP Server:</label>
               <select class="form-select" id="XRPServer">
-                <option value="wss://xrplcluster.com/" selected>Mainnet</option>
-                <option value="wss://s.altnet.rippletest.net/">Testnet</option>
-                <option value="ws://localhost:6006/">Localnet</option>
+                <option value="Localnet" selected>Localnet</option>
+                <option value="Mainnet">Mainnet</option>
+                <option value="Testnet">Testnet</option>
               </select>
             </div>
             <hr />
@@ -215,7 +215,7 @@
         <!-- Modal Footer Buttons -->
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary">Save changes</button>
+          <button type="button" class="btn btn-primary" id="saveSettingsBtn" data-bs-dismiss="modal">Save settings</button>
         </div>
 
       </div>

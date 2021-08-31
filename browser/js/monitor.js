@@ -24,38 +24,43 @@ const SERVER_STATE_CLASS = {  // Classes to use for different server states
   "proposing": "text-warning",
 };
 const RIPPLE_EPOCH = 946684800;  // Ripple Epoch Timestamp in seconds
-const LOG_INFO = false;  // Flag to output info responses to console
+const LOG_INFO = true;  // Flag to output info responses to console
 const LOG_TRANS = true;  // Flag to output transaction data to console
 
 // Global Variables
-let currentServer = "Testnet";  // Current Server -- TODO: GET FROM LOCAL STORAGE
+let currentServer = "";  // Current Server - Retrieved from Local Storage
 let currentServerURL = SERVERS[currentServer];  // Current Server URL to connect to
 let reserveBaseXRP = 0;  // Minimum XRP Reserve per account
 let reserveIncXRP = 0;  // Incremental XRP per Object owned
 let awaitingMsgs = {};  // Awaiting Messages
 let receivedTrans = {};  // Received Transactions
-let currentTrans = "";  // Current Selected Transaction
+let currentTrans = null;  // Current Selected Transaction
 let messageID = 0;  // Specific message ID
-let currentAccounts = [{  // Current Accounts -- TODO: GET FROM LOCAL STORAGE
-  "name": "New",
-  "address": "r3cAFTUeggLrsxpH1NxoZ4GxLjBDa8aicL",
-  "transClass": "justify-content-start",
-}, {
-  "name": "Testnet02",
-  "address": "rhacBEhAdTBeuwcXe5ArVnX8Kwh886poSo",
-  "transClass": "justify-content-center",
-}, {
-  "name": "Testnet03",
-  "address": "rnbsExCdXV2y85Qg9ewKkuNsuQGGjDBfBC",
-  "transClass": "justify-content-end",
-}];
+let currentAccounts = [];  // Current Accounts - Retrieved from Local Storage
 
+// Get Settings from Local Storage
+getSettings();
+
+// let currentAccounts = [{  // Current Accounts -- TODO: GET FROM LOCAL STORAGE
+//   "name": "Testnet01",
+//   "address": "rww9WLeWwviNvAJV3QeRCof3kJLomPnaNw",
+//   "transClass": "justify-content-start",
+// }, {
+//   "name": "Testnet02",
+//   "address": "rhacBEhAdTBeuwcXe5ArVnX8Kwh886poSo",
+//   "transClass": "justify-content-center",
+// }, {
+//   "name": "Testnet03",
+//   "address": "rnbsExCdXV2y85Qg9ewKkuNsuQGGjDBfBC",
+//   "transClass": "justify-content-end",
+// }];
 
 // rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe  - Faucet
 // rfyJRyFZzX71LL5LreHpUZBZqrB18xUL4P  - Offers
 // rww9WLeWwviNvAJV3QeRCof3kJLomPnaNw  - Testnet01
 // rhacBEhAdTBeuwcXe5ArVnX8Kwh886poSo  - Testnet02
 // rnbsExCdXV2y85Qg9ewKkuNsuQGGjDBfBC  - Testnet03
+
 
 // Global HTML Elements
 const statusEl = document.getElementById("status");
@@ -64,6 +69,16 @@ const ledgerInfoEl = document.getElementById("ledgerInfo");
 const accountInfoEls = document.querySelectorAll(".account-info");
 const accountTransEls = document.querySelectorAll(".account-trans");
 const transInfoEl = document.getElementById("transInfo");
+
+// Get Form Elements
+const XRPServerEl = document.getElementById("XRPServer");
+const accountName0El = document.getElementById("accountName0");
+const accountAddress0El = document.getElementById("accountAddress0");
+const accountName1El = document.getElementById("accountName1");
+const accountAddress1El = document.getElementById("accountAddress1");
+const accountName2El = document.getElementById("accountName2");
+const accountAddress2El = document.getElementById("accountAddress2");
+
 
 // Initialise Bootstrap Tooltips
 const tooltipList = document.querySelectorAll(`[data-bs-toggle="tooltip"]`);
@@ -132,6 +147,75 @@ function refreshInfo(event = null){
   getServerInfo();
   getLedgerInfo();
   getAccountsInfo();
+}
+
+
+// Add Modal Save Settings Button
+const saveSettingsBtn = document.getElementById("saveSettingsBtn");
+saveSettingsBtn.addEventListener("click", saveSettings);
+
+// Function to Save Settings to Local Storage
+function saveSettings() {
+  // Build Local Storage Object
+  const storedData = {
+    "XRPServer": XRPServerEl.value,
+    "accountName0": accountName0El.value,
+    "accountAddress0": accountAddress0El.value,
+    "accountName1": accountName1El.value,
+    "accountAddress1": accountAddress1El.value,
+    "accountName2": accountName2El.value,
+    "accountAddress2": accountAddress2El.value,
+  };
+
+  // Save to Local Storage
+  localStorage.setItem("xrpMonitor", JSON.stringify(storedData));
+
+  // Use new Settings
+  useSettings(storedData);
+}
+
+
+// TO HERE - NOT WORKING 
+
+// Function to Get Settings from Local Storage
+function getSettings() {
+  let storedData = {};
+  if (localStorage.getItem("xrpMonitor")) {
+    storedData = JSON.parse(localStorage.getItem("xrpMonitor"));
+  }
+  else {
+    // Load default of Testnet Server with Faucet Account
+    storedData = {
+      "XRPServer": "Testnet",
+      "accountName0": "Testnet Faucet",
+      "accountAddress0": "rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe",
+      "accountName1": "",
+      "accountAddress1": "",
+      "accountName2": "",
+      "accountAddress2": "",
+    };
+  }
+
+  // Use retrieved settings
+  useSettings(storedData);
+}
+
+// Function to Use Settings Saved/Retrieved in Local Storage
+function useSettings(storedData) {
+  currentServer = storedData.XRPServer;
+  currentAccounts = [{
+    "name": storedData.accountName0,
+    "address": storedData.accountAddress0,
+    "transClass": "justify-content-start",
+  }, {
+    "name": storedData.accountName1,
+    "address": storedData.accountAddress1,
+    "transClass": "justify-content-center",
+  }, {
+    "name": storedData.accountName2,
+    "address": storedData.accountAddress2,
+    "transClass": "justify-content-end",
+  }];
 }
 
 
@@ -257,6 +341,10 @@ async function getLedgerInfo() {
 // Function to get Accounts Info
 function getAccountsInfo() {
   currentAccounts.forEach(async (account, index) => {
+    if (account.address === "") {
+      // Do not get account information for blank addresses
+      return;
+    }
     const message = {
       "command": "account_info",
       "account": account.address,
@@ -298,25 +386,32 @@ function getAccountsInfo() {
 
 // Function to Subscribe to Accounts Transactions
 async function subscribeActTrans() {
-  // Create Accounts Array
-  const accountsArray = currentAccounts.map((account) => {
+  const accountsArray = currentAccounts.filter((account) => {
+    return account.address !== "";
+  }).map((account) => {
     return account.address;
   });
-  const message = {
-    "command": "subscribe",
-    "accounts": accountsArray,
-  };
-  const response = await createRequest(message, "sub");
-  if (LOG_INFO === true) {
-    console.log(response);
+  
+  // Check there are Accounts to subscribe to
+  if (accountsArray.length > 0) {
+    const message = {
+      "command": "subscribe",
+      "accounts": accountsArray,
+    };
+    const response = await createRequest(message, "sub");
+    if (LOG_INFO === true) {
+      console.log(response);
+    }
+  
+    // Update Account Transactions <div>
+    currentAccounts.forEach((account, index) => {
+      if (accountsArray.find((address) => address === account.address)) {
+        accountTransEls[index].innerHTML = `
+          <p class="px-2 col-success">Subscribed...</p>
+        `;
+      }
+    });
   }
-
-  // Update Account Transactions <div>
-  currentAccounts.forEach((account, index) => {
-    accountTransEls[index].innerHTML = `
-      <p class="px-2 col-success">Subscribed...</p>
-    `;
-  });
 }
 
 
@@ -426,7 +521,7 @@ function processTransaction(data) {
 // Function to show a selected transaction
 function showTransaction(event) {
   // Check if currentTrans already selected and if so close it
-  if (currentTrans !== "") {
+  if (currentTrans !== null) {
     closeTransaction();    
   }
 
@@ -623,6 +718,6 @@ function closeTransaction() {
     }
   });
   // Clear Transaction
-  currentTrans = "";
+  currentTrans = null;
   transInfoEl.innerHTML = "<!-- Placeholder for Selected Transaction -->";
 }
