@@ -24,12 +24,13 @@ const SERVER_STATE_CLASS = {  // Classes to use for different server states
   "proposing": "text-warning",
 };
 const RIPPLE_EPOCH = 946684800;  // Ripple Epoch Timestamp in seconds
-const LOG_INFO = true;  // Flag to output info responses to console
+const LOG_RESPONSE = false;  // Flag to output info responses to console
 const LOG_TRANS = true;  // Flag to output transaction data to console
 
 // Global Variables
+let socket = null;  // Websocket Connection
 let currentServer = "";  // Current Server - Retrieved from Local Storage
-let currentServerURL = SERVERS[currentServer];  // Current Server URL to connect to
+let currentServerURL = "";  // Current Server URL to connect to
 let reserveBaseXRP = 0;  // Minimum XRP Reserve per account
 let reserveIncXRP = 0;  // Incremental XRP per Object owned
 let awaitingMsgs = {};  // Awaiting Messages
@@ -37,30 +38,6 @@ let receivedTrans = {};  // Received Transactions
 let currentTrans = null;  // Current Selected Transaction
 let messageID = 0;  // Specific message ID
 let currentAccounts = [];  // Current Accounts - Retrieved from Local Storage
-
-// Get Settings from Local Storage
-getSettings();
-
-// let currentAccounts = [{  // Current Accounts -- TODO: GET FROM LOCAL STORAGE
-//   "name": "Testnet01",
-//   "address": "rww9WLeWwviNvAJV3QeRCof3kJLomPnaNw",
-//   "transClass": "justify-content-start",
-// }, {
-//   "name": "Testnet02",
-//   "address": "rhacBEhAdTBeuwcXe5ArVnX8Kwh886poSo",
-//   "transClass": "justify-content-center",
-// }, {
-//   "name": "Testnet03",
-//   "address": "rnbsExCdXV2y85Qg9ewKkuNsuQGGjDBfBC",
-//   "transClass": "justify-content-end",
-// }];
-
-// rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe  - Faucet
-// rfyJRyFZzX71LL5LreHpUZBZqrB18xUL4P  - Offers
-// rww9WLeWwviNvAJV3QeRCof3kJLomPnaNw  - Testnet01
-// rhacBEhAdTBeuwcXe5ArVnX8Kwh886poSo  - Testnet02
-// rnbsExCdXV2y85Qg9ewKkuNsuQGGjDBfBC  - Testnet03
-
 
 // Global HTML Elements
 const statusEl = document.getElementById("status");
@@ -84,52 +61,6 @@ const accountAddress2El = document.getElementById("accountAddress2");
 const tooltipList = document.querySelectorAll(`[data-bs-toggle="tooltip"]`);
 tooltipList.forEach((tooltip) => {
   new bootstrap.Tooltip(tooltip);
-});
-
-
-// Setup Websocket Connection
-const socket = new WebSocket(currentServerURL);
-
-// Add Websocket "close" event listener
-socket.addEventListener("close", () => {
-  console.log(`Disconnected from '${currentServer}' at '${currentServerURL}'`);
-  // Show disconnected message
-  showStatus("text-warning", "Disconnected");
-});
-
-// Add Websocket "error" event listener
-socket.addEventListener("error", (event) => {
-  console.log(event);
-  showStatus("col-error", "Error. See console");
-});
-
-// Add Websocket "message" event listener
-socket.addEventListener("message", (event) => {
-  try {
-    const parsedData = JSON.parse(event.data);
-    // Check WS_HANDLERS has a method to process the message type
-    if (Object.prototype.hasOwnProperty.call(WS_HANDLERS, parsedData.type)) {
-      // Call the message handler with the data
-      WS_HANDLERS[parsedData.type](parsedData);
-    } else {
-      throw new Error(`Message Type '${parsedData.type}' not setup in WS_HANDLERS`);
-    }
-  } catch (error) {
-    console.error(`Websocket Message Error: ${error}`);
-    console.log(event);
-    showStatus("col-error", "Error. See console");
-  }
-});
-
-// Add Websocket "open" event listener
-socket.addEventListener("open", () => {
-  console.log(`Connected to '${currentServer}' at '${currentServerURL}'`);
-  showStatus("col-success", "Connected");
-  // Get all initial data
-  getServerInfo();
-  getLedgerInfo();
-  getAccountsInfo();
-  subscribeActTrans();
 });
 
 
@@ -174,11 +105,8 @@ function saveSettings() {
   useSettings(storedData);
 }
 
-
-// TO HERE - NOT WORKING 
-
 // Function to Get Settings from Local Storage
-function getSettings() {
+function getSettings(event = null) {
   let storedData = {};
   if (localStorage.getItem("xrpMonitor")) {
     storedData = JSON.parse(localStorage.getItem("xrpMonitor"));
@@ -196,13 +124,25 @@ function getSettings() {
     };
   }
 
+  if (event === null) {
+    // Initial retrieval of settings not triggered by click event - so Update modal
+    XRPServerEl.value = storedData.XRPServer;
+    accountName0El.value = storedData.accountName0;
+    accountAddress0El.value = storedData.accountAddress0;
+    accountName1El.value = storedData.accountName1;
+    accountAddress1El.value = storedData.accountAddress1;
+    accountName2El.value = storedData.accountName2;
+    accountAddress2El.value = storedData.accountAddress2;
+  }
+
   // Use retrieved settings
   useSettings(storedData);
 }
 
-// Function to Use Settings Saved/Retrieved in Local Storage
+// Function to Use Settings Saved in/Retrieved from Local Storage
 function useSettings(storedData) {
   currentServer = storedData.XRPServer;
+  currentServerURL = SERVERS[currentServer];
   currentAccounts = [{
     "name": storedData.accountName0,
     "address": storedData.accountAddress0,
@@ -216,6 +156,65 @@ function useSettings(storedData) {
     "address": storedData.accountAddress2,
     "transClass": "justify-content-end",
   }];
+
+  // (Re)Load WebSocket with new server/accounts
+  loadWebSocket();
+}
+
+
+// Function to initialise Websocket Connection
+function loadWebSocket() {
+  if (socket !== null) {
+    // Close current Websocket Connection
+    socket.close(1000);
+  }
+
+  socket = new WebSocket(currentServerURL);
+
+  // Add Websocket "close" event listener
+  socket.addEventListener("close", (event) => {
+    const discServer = Object.keys(SERVERS).find(key => SERVERS[key] === event.currentTarget.url);
+    console.log(`Disconnected from '${discServer}' at '${event.currentTarget.url}' with code '${event.code}' (See: https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#status_codes)`);
+    // Show disconnected message if not re-connected
+    if (socket.readyState !== 1) {
+      showStatus("text-warning", "Disconnected");
+    }
+  });
+
+  // Add Websocket "error" event listener
+  socket.addEventListener("error", (event) => {
+    console.log(event);
+    showStatus("col-error", "Error. See console");
+  });
+
+  // Add Websocket "message" event listener
+  socket.addEventListener("message", (event) => {
+    try {
+      const parsedData = JSON.parse(event.data);
+      // Check WS_HANDLERS has a method to process the message type
+      if (Object.prototype.hasOwnProperty.call(WS_HANDLERS, parsedData.type)) {
+        // Call the message handler with the data
+        WS_HANDLERS[parsedData.type](parsedData);
+      } else {
+        throw new Error(`Message Type '${parsedData.type}' not setup in WS_HANDLERS`);
+      }
+    } catch (error) {
+      console.error(`Websocket Message Error: ${error}`);
+      console.log(event);
+      showStatus("col-error", "Error. See console");
+    }
+  });
+
+  // Add Websocket "open" event listener
+  socket.addEventListener("open", () => {
+    console.log(`Connected to '${currentServer}' at '${currentServerURL}'`);
+    showStatus("col-success", "Connected");
+    // Get all initial data
+    getServerInfo();
+    getLedgerInfo();
+    getAccountsInfo();
+    subscribeActTrans();
+  });
 }
 
 
@@ -276,7 +275,7 @@ async function getServerInfo() {
     "command": "server_info",
   };
   const response = await createRequest(message, "svr");
-  if (LOG_INFO === true) {
+  if (LOG_RESPONSE === true) {
     console.log(response);
   }
   showStatus("col-success", "Connected");
@@ -305,7 +304,7 @@ async function getLedgerInfo() {
     "transactions": true,
   };
   const response = await createRequest(message, "ldg");
-  if (LOG_INFO === true) {
+  if (LOG_RESPONSE === true) {
     console.log(response);
   }
   showStatus("col-success", "Connected");
@@ -328,7 +327,7 @@ async function getLedgerInfo() {
 
   // Fix Ledger Close Time
   const ledgerCloseTime = fixDate(new Date((RIPPLE_EPOCH + response.result.ledger.close_time) * 1000));
-  
+
   // Update Ledger Info Table
   ledgerInfoEl.innerHTML = `
     <tr><th>Ledger Version:</th><td>${response.result.ledger.ledger_index} ${ledgerValid}</td></tr>
@@ -342,45 +341,51 @@ async function getLedgerInfo() {
 function getAccountsInfo() {
   currentAccounts.forEach(async (account, index) => {
     if (account.address === "") {
-      // Do not get account information for blank addresses
-      return;
-    }
-    const message = {
-      "command": "account_info",
-      "account": account.address,
-      "ledger_index": "validated",
-    };
-    const response = await createRequest(message, "act");
-    if (LOG_INFO === true) {
-      console.log(response);
-    }
-    showStatus("col-success", "Connected");
-
-    // Calculate Balance in XRP and set class
-    const accBalXRP = convertDropsToXRP(response.result.account_data.Balance);
-    const accReserveXRP = (reserveBaseXRP + (reserveIncXRP * response.result.account_data.OwnerCount));
-    let accBalClass = "";
-    if (accBalXRP.lte(accReserveXRP)) {
-      accBalClass = "col-error";
-    } else if (accBalXRP.gt(accReserveXRP) && accBalXRP.lte(accReserveXRP + reserveBaseXRP)) {
-      accBalClass = "text-warning";
+      // Do not get account information for blank addresses but load "Awaiting" sections
+      accountInfoEls[index].innerHTML = `
+        <tr><td class="col-info">Awaiting Account ${index} Information...</td></tr>
+      `;
+      accountTransEls[index].innerHTML = `
+      <p class="col-info">Awaiting Account ${index} Transaction Subscription...</p>
+      `;
     } else {
-      accBalClass = "col-success";
-    }
-    const accBalXRPText = new Intl.NumberFormat("en-GB", {minimumFractionDigits: 6}).format(accBalXRP.toFixed(6));
+      const message = {
+        "command": "account_info",
+        "account": account.address,
+        "ledger_index": "validated",
+      };
+      const response = await createRequest(message, "act");
+      if (LOG_RESPONSE === true) {
+        console.log(response);
+      }
+      showStatus("col-success", "Connected");
 
-    // Update Account Info Table
-    accountInfoEls[index].innerHTML = `
-      <thead>
-        <tr><th class="text-center" colspan="2" scope="colgroup">
-          <h5 class="text-info">Account: ${account.name}</h5>
-        </th></tr>
-      </thead>
-      <tbody>
-        <tr><th>Address:</th><td>${account.address}</td></tr>
-        <tr><th>Balance:</th><td><span class=${accBalClass}>${accBalXRPText}</span> XRP (Reserve: ${accReserveXRP}) as at Ledger '${response.result.ledger_index}'</td></tr>
-      </tbody>
-    `;
+      // Calculate Balance in XRP and set class
+      const accBalXRP = convertDropsToXRP(response.result.account_data.Balance);
+      const accReserveXRP = (reserveBaseXRP + (reserveIncXRP * response.result.account_data.OwnerCount));
+      let accBalClass = "";
+      if (accBalXRP.lte(accReserveXRP)) {
+        accBalClass = "col-error";
+      } else if (accBalXRP.gt(accReserveXRP) && accBalXRP.lte(accReserveXRP + reserveBaseXRP)) {
+        accBalClass = "text-warning";
+      } else {
+        accBalClass = "col-success";
+      }
+      const accBalXRPText = new Intl.NumberFormat("en-GB", {minimumFractionDigits: 6}).format(accBalXRP.toFixed(6));
+
+      // Update Account Info Table
+      accountInfoEls[index].innerHTML = `
+        <thead>
+          <tr><th class="text-center" colspan="2" scope="colgroup">
+            <h5 class="text-info">Account: ${account.name}</h5>
+          </th></tr>
+        </thead>
+        <tbody>
+          <tr><th>Address:</th><td>${account.address}</td></tr>
+          <tr><th>Balance:</th><td><span class=${accBalClass}>${accBalXRPText}</span> XRP (Reserve: ${accReserveXRP}) as at Ledger '${response.result.ledger_index}'</td></tr>
+        </tbody>
+      `;
+    }
   });
 }
 
@@ -391,7 +396,7 @@ async function subscribeActTrans() {
   }).map((account) => {
     return account.address;
   });
-  
+
   // Check there are Accounts to subscribe to
   if (accountsArray.length > 0) {
     const message = {
@@ -399,10 +404,10 @@ async function subscribeActTrans() {
       "accounts": accountsArray,
     };
     const response = await createRequest(message, "sub");
-    if (LOG_INFO === true) {
+    if (LOG_RESPONSE === true) {
       console.log(response);
     }
-  
+
     // Update Account Transactions <div>
     currentAccounts.forEach((account, index) => {
       if (accountsArray.find((address) => address === account.address)) {
@@ -423,10 +428,10 @@ function processTransaction(data) {
     if (LOG_TRANS === true) {
       console.log(data);
     }
-  
+
     // Fix Transaction Date
     const transDate = fixDate(new Date((RIPPLE_EPOCH + data.transaction.date) * 1000));
-  
+
     // Loop over accounts and output transaction details for relevant account
     let accountFound = false;
     currentAccounts.forEach((account, index) => {
@@ -466,7 +471,7 @@ function processTransaction(data) {
         const dataType = document.createAttribute("data-type");
         dataType.value = transText;
         newTransLink.setAttributeNode(dataType);
-  
+
         if (data.validated !== true) {
           // Transaction is not validated
           newTransLink.classList.add("trans-error");
@@ -476,12 +481,12 @@ function processTransaction(data) {
           // Failed Transaction
           newTransLink.classList.add("trans-error");
           newTransLink.textContent = `${transDate} > ${transText} Transaction Failed!`;
-  
+
         } else if (data.transaction.TransactionType !== "Payment" || typeof data.meta.delivered_amount !== "string") {
           // Non-XRP Payment Sent
           newTransLink.classList.add("trans-other");
           newTransLink.textContent = `${transDate} > Non-XRP Payment ${transText}`;
-  
+
         } else {
           // Fix Transaction Delivered Amount for Payment Transaction
           const transAmtXRP = convertDropsToXRP(data.meta.delivered_amount);
@@ -490,7 +495,7 @@ function processTransaction(data) {
           newTransLink.classList.add(`trans-${transText.toLowerCase()}`);
           newTransLink.textContent = `${transDate} > ${transAmtXRPText} XRP ${transText}`;
         }
-  
+
         // Add "click" Event Listener to new item
         newTransLink.addEventListener("click", showTransaction);
 
@@ -522,7 +527,7 @@ function processTransaction(data) {
 function showTransaction(event) {
   // Check if currentTrans already selected and if so close it
   if (currentTrans !== null) {
-    closeTransaction();    
+    closeTransaction();
   }
 
   currentTrans = event.target;
@@ -539,7 +544,7 @@ function showTransaction(event) {
   if (Object.prototype.hasOwnProperty.call(transData.transaction, "Destination")) {
     transRecipient = `TO ${transData.transaction.Destination}`;
   }
-  
+
   // Calculate Fee Amount if transType is "Sent"
   let transFeeXRP = "0";
   let transFeeText = "";
@@ -677,7 +682,7 @@ function showStatus(statusClass, message) {
   // Only show new message if current message is not an error
   if (!statusEl.lastChild.classList.contains("col-error")) {
     const statusDate = fixDate(new Date());
-    statusEl.innerHTML = `<span class="col-info">Last updated: ${statusDate} - </span><span class="${statusClass}">${message}`;  
+    statusEl.innerHTML = `<span class="col-info">Last updated: ${statusDate} - </span><span class="${statusClass}">${message}`;
   }
 }
 
@@ -721,3 +726,6 @@ function closeTransaction() {
   currentTrans = null;
   transInfoEl.innerHTML = "<!-- Placeholder for Selected Transaction -->";
 }
+
+// Initialise App
+getSettings();
