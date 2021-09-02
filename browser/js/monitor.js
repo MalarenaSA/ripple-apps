@@ -4,11 +4,25 @@
 // JavaScript for Monitor App
 
 // Global Constants
-const SERVERS = {  // List of XRP Server URL's
-  "Mainnet": "wss://xrplcluster.com/",
-  "Testnet": "wss://s.altnet.rippletest.net/",
-  "Localnet": "ws://localhost:6006/",
-};
+const SERVERS = [  // List of XRP Server URL's
+  {
+    "name": "Testnet",
+    "serverURL": "wss://s.altnet.rippletest.net/",
+    "explorerURL": "https://testnet.xrpl.org/",
+  }, {
+    "name": "Devnet",
+    "serverURL": "wss://s.devnet.rippletest.net/",
+    "explorerURL": "https://devnet.xrpl.org/",
+  }, {
+    "name": "Mainnet",
+    "serverURL": "wss://xrplcluster.com/",  // wss://xrplcluster.com/ or wss://s2.ripple.com/
+    "explorerURL": "https://livenet.xrpl.org/",
+  }, {
+    "name": "Localnet",
+    "serverURL": "ws://localhost:6006/",
+    "explorerURL": "https://livenet.xrpl.org/",
+  }
+];
 const WS_HANDLERS = {  // Websocket Message Handlers
   "response": processResponse,
   "transaction": processTransaction,
@@ -29,8 +43,7 @@ const LOG_TRANS = true;  // Flag to output transaction data to console
 
 // Global Variables
 let socket = null;  // Websocket Connection
-let currentServer = "";  // Current Server - Retrieved from Local Storage
-let currentServerURL = "";  // Current Server URL to connect to
+let currentServer = {};  // Current Server - Based on Index Retrieved from Local Storage
 let reserveBaseXRP = 0;  // Minimum XRP Reserve per account
 let reserveIncXRP = 0;  // Incremental XRP per Object owned
 let awaitingMsgs = {};  // Awaiting Messages
@@ -89,7 +102,7 @@ saveSettingsBtn.addEventListener("click", saveSettings);
 function saveSettings() {
   // Build Local Storage Object
   const storedData = {
-    "XRPServer": XRPServerEl.value,
+    "serverIndex": XRPServerEl.value,
     "accountName0": accountName0El.value,
     "accountAddress0": accountAddress0El.value,
     "accountName1": accountName1El.value,
@@ -114,7 +127,7 @@ function getSettings(event = null) {
   else {
     // Load default of Testnet Server with Faucet Account
     storedData = {
-      "XRPServer": "Testnet",
+      "serverIndex": "0",
       "accountName0": "Testnet Faucet",
       "accountAddress0": "rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe",
       "accountName1": "",
@@ -126,7 +139,7 @@ function getSettings(event = null) {
 
   if (event === null) {
     // Initial retrieval of settings not triggered by click event - so Update modal
-    XRPServerEl.value = storedData.XRPServer;
+    XRPServerEl.value = storedData.serverIndex;
     accountName0El.value = storedData.accountName0;
     accountAddress0El.value = storedData.accountAddress0;
     accountName1El.value = storedData.accountName1;
@@ -141,21 +154,22 @@ function getSettings(event = null) {
 
 // Function to Use Settings Saved in/Retrieved from Local Storage
 function useSettings(storedData) {
-  currentServer = storedData.XRPServer;
-  currentServerURL = SERVERS[currentServer];
-  currentAccounts = [{
-    "name": storedData.accountName0,
-    "address": storedData.accountAddress0,
-    "transClass": "justify-content-start",
-  }, {
-    "name": storedData.accountName1,
-    "address": storedData.accountAddress1,
-    "transClass": "justify-content-center",
-  }, {
-    "name": storedData.accountName2,
-    "address": storedData.accountAddress2,
-    "transClass": "justify-content-end",
-  }];
+  currentServer = SERVERS[storedData.serverIndex];
+  currentAccounts = [
+    {
+      "name": storedData.accountName0,
+      "address": storedData.accountAddress0,
+      "transClass": "justify-content-start",
+    }, {
+      "name": storedData.accountName1,
+      "address": storedData.accountAddress1,
+      "transClass": "justify-content-center",
+    }, {
+      "name": storedData.accountName2,
+      "address": storedData.accountAddress2,
+      "transClass": "justify-content-end",
+    }
+  ];
 
   // (Re)Load WebSocket with new server/accounts
   loadWebSocket();
@@ -169,12 +183,18 @@ function loadWebSocket() {
     socket.close(1000);
   }
 
-  socket = new WebSocket(currentServerURL);
+  socket = new WebSocket(currentServer.serverURL);
 
   // Add Websocket "close" event listener
   socket.addEventListener("close", (event) => {
-    const discServer = Object.keys(SERVERS).find(key => SERVERS[key] === event.currentTarget.url);
-    console.log(`Disconnected from '${discServer}' at '${event.currentTarget.url}' with code '${event.code}' (See: https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#status_codes)`);
+    let disconServerName = "";
+    SERVERS.forEach((server) => {
+      if (server.serverURL === event.currentTarget.url) {
+        disconServerName = server.name;
+        return;
+      }
+    });
+    console.log(`Disconnected from '${disconServerName}' at '${event.currentTarget.url}' with code '${event.code}' (See: https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#status_codes)`);
     // Show disconnected message if not re-connected
     if (socket.readyState !== 1) {
       showStatus("text-warning", "Disconnected");
@@ -207,7 +227,7 @@ function loadWebSocket() {
 
   // Add Websocket "open" event listener
   socket.addEventListener("open", () => {
-    console.log(`Connected to '${currentServer}' at '${currentServerURL}'`);
+    console.log(`Connected to '${currentServer.name}' at '${currentServer.serverURL}'`);
     showStatus("col-success", "Connected");
     // Get all initial data
     getServerInfo();
@@ -289,7 +309,7 @@ async function getServerInfo() {
 
   // Update Server Info Table
   serverInfoEl.innerHTML = `
-    <tr><th>Server Hostname:</th><td>${response.result.info.hostid} (${currentServer})</td></tr>
+    <tr><th>Server Hostname:</th><td>${response.result.info.hostid} (${currentServer.name})</td></tr>
     <tr><th>State:</th><td class="text-capitalize ${SERVER_STATE_CLASS[response.result.info.server_state]}">${(response.result.info.server_state)}</td></tr>
     <tr><th>Ledgers Available:</th><td>${response.result.info.complete_ledgers}</td></tr>
     <tr><th>Current Fee:</th><td>${currentFee.toFixed(6)} XRP</td></tr>
@@ -381,7 +401,7 @@ function getAccountsInfo() {
           </th></tr>
         </thead>
         <tbody>
-          <tr><th>Address:</th><td>${account.address}</td></tr>
+          <tr><th>Address:</th><td><a class="link-light" href="${currentServer.explorerURL}accounts/${account.address}" target="explorer">${account.address}</a></td></tr>
           <tr><th>Balance:</th><td><span class=${accBalClass}>${accBalXRPText}</span> XRP (Reserve: ${accReserveXRP}) as at Ledger '${response.result.ledger_index}'</td></tr>
         </tbody>
       `;
@@ -542,7 +562,7 @@ function showTransaction(event) {
   // Fix Transaction Recipient
   let transRecipient = "";
   if (Object.prototype.hasOwnProperty.call(transData.transaction, "Destination")) {
-    transRecipient = `TO ${transData.transaction.Destination}`;
+    transRecipient = `TO <a class="link-light" href="${currentServer.explorerURL}accounts/${transData.transaction.Destination}" target="explorer">${transData.transaction.Destination}</a>`;
   }
 
   // Calculate Fee Amount if transType is "Sent"
@@ -650,8 +670,8 @@ function showTransaction(event) {
           </thead>
           <tbody>
             <tr><th>Type:</th><td>${transData.transaction.TransactionType} (${transType})</td></tr>
-            <tr><th>Hash:</th><td>${transHash}</td></tr>
-            <tr><th>Account(s):</th><td>${transData.transaction.Account} ${transRecipient}</td></tr>
+            <tr><th>Hash:</th><td><a class="link-light" href="${currentServer.explorerURL}transactions/${transHash}" target="explorer">${transHash}</a></td></tr>
+            <tr><th>Account(s):</th><td><a class="link-light" href="${currentServer.explorerURL}accounts/${transData.transaction.Account}" target="explorer">${transData.transaction.Account}</a> ${transRecipient}</td></tr>
             <tr><th>Amount:</th><td>${transAmountText} ${transCurrency} ${transFeeText} ${transAmountComment}</td></tr>
             <tr><th>Result:</th><td class="${resultClass}">${transData.meta.TransactionResult} - ${transData.engine_result_message}</td></tr>
           </tbody>
