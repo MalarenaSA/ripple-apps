@@ -7,18 +7,22 @@
 const SERVERS = [  // List of XRP Server URL's
   {
     "name": "Testnet",
+    "displayClass": "text-warning",
     "serverURL": "wss://s.altnet.rippletest.net/",
     "explorerURL": "https://testnet.xrpl.org/",
   }, {
     "name": "Devnet",
+    "displayClass": "text-info",
     "serverURL": "wss://s.devnet.rippletest.net/",
     "explorerURL": "https://devnet.xrpl.org/",
   }, {
     "name": "Mainnet",
+    "displayClass": "col-success",
     "serverURL": "wss://xrplcluster.com/",  // wss://xrplcluster.com/ or wss://s2.ripple.com/
     "explorerURL": "https://livenet.xrpl.org/",
   }, {
     "name": "Localnet",
+    "displayClass": "col-success",
     "serverURL": "ws://localhost:6006/",
     "explorerURL": "https://livenet.xrpl.org/",
   }
@@ -93,6 +97,13 @@ function refreshInfo(event = null){
   getAccountsInfo();
 }
 
+// Build Modal Server List
+SERVERS.forEach((server, index) => {
+  const optionEl = document.createElement("option");
+  optionEl.value = `${index}`;
+  optionEl.textContent = server.name;
+  XRPServerEl.appendChild(optionEl);
+});
 
 // Add Modal Save Settings Button
 const saveSettingsBtn = document.getElementById("saveSettingsBtn");
@@ -119,7 +130,7 @@ function saveSettings() {
 }
 
 // Function to Get Settings from Local Storage
-function getSettings(event = null) {
+function getSettings() {
   let storedData = {};
   if (localStorage.getItem("xrpMonitor")) {
     storedData = JSON.parse(localStorage.getItem("xrpMonitor"));
@@ -137,17 +148,15 @@ function getSettings(event = null) {
     };
   }
 
-  if (event === null) {
-    // Initial retrieval of settings not triggered by click event - so Update modal
-    XRPServerEl.value = storedData.serverIndex;
-    accountName0El.value = storedData.accountName0;
-    accountAddress0El.value = storedData.accountAddress0;
-    accountName1El.value = storedData.accountName1;
-    accountAddress1El.value = storedData.accountAddress1;
-    accountName2El.value = storedData.accountName2;
-    accountAddress2El.value = storedData.accountAddress2;
-  }
-
+  // Update modal form with retrieved settings
+  XRPServerEl.value = storedData.serverIndex;
+  accountName0El.value = storedData.accountName0;
+  accountAddress0El.value = storedData.accountAddress0;
+  accountName1El.value = storedData.accountName1;
+  accountAddress1El.value = storedData.accountAddress1;
+  accountName2El.value = storedData.accountName2;
+  accountAddress2El.value = storedData.accountAddress2;
+  
   // Use retrieved settings
   useSettings(storedData);
 }
@@ -194,7 +203,7 @@ function loadWebSocket() {
         return;
       }
     });
-    console.log(`Disconnected from '${disconServerName}' at '${event.currentTarget.url}' with code '${event.code}' (See: https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#status_codes)`);
+    console.log(`${fixDate(new Date)}> Disconnected from '${disconServerName}' at '${event.currentTarget.url}' with code '${event.code}' (See: https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#status_codes)`);
     // Show disconnected message if not re-connected
     if (socket.readyState !== 1) {
       showStatus("text-warning", "Disconnected");
@@ -227,7 +236,7 @@ function loadWebSocket() {
 
   // Add Websocket "open" event listener
   socket.addEventListener("open", () => {
-    console.log(`Connected to '${currentServer.name}' at '${currentServer.serverURL}'`);
+    console.log(`${fixDate(new Date)}> Connected to '${currentServer.name}' at '${currentServer.serverURL}'`);
     showStatus("col-success", "Connected");
     // Get all initial data
     getServerInfo();
@@ -309,7 +318,7 @@ async function getServerInfo() {
 
   // Update Server Info Table
   serverInfoEl.innerHTML = `
-    <tr><th>Server Hostname:</th><td>${response.result.info.hostid} (${currentServer.name})</td></tr>
+    <tr><th>Server Hostname:</th><td>${response.result.info.hostid} (<span class="${currentServer.displayClass}">${currentServer.name}</span>)</td></tr>
     <tr><th>State:</th><td class="text-capitalize ${SERVER_STATE_CLASS[response.result.info.server_state]}">${(response.result.info.server_state)}</td></tr>
     <tr><th>Ledgers Available:</th><td>${response.result.info.complete_ledgers}</td></tr>
     <tr><th>Current Fee:</th><td>${currentFee.toFixed(6)} XRP</td></tr>
@@ -730,7 +739,7 @@ function getDifferenceXRP(dropsPrev, dropsFinal, XRPFee) {
   return diffInXRPAfterFee;
 }
 
-// Function for to close an open Transaction Section
+// Function to close an open Transaction Section
 function closeTransaction() {
   // Hide Transaction Info Section
   transInfoEl.style.visibility = "hidden";
