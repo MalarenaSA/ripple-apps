@@ -15,8 +15,9 @@ const api = new RippleAPI({
   server: process.env.XRPL_SERVER
 });
 
-// Handle Errors
+// Handle API Connection Errors
 api.on("error", (errorCode, errorMessage, data) => {
+  console.error(`API Connection Error:`);
   console.error(`${errorCode} : ${errorMessage} : ${data}`);
 });
 
@@ -36,13 +37,19 @@ api.connect().then(() => {
   // Send Request
   return api.getTransaction(process.env.XRPL_TRANSACTION);
 }).then((response) => {
+  console.log(response);
   // Process Response
   showMessage("TransactionInfo", response);
   showMessage("TransactionSummary", `Result: ${response.outcome.result} / Amount: ${response.outcome.deliveredAmount.currency} ${response.outcome.deliveredAmount.value}`);
 }).then(() => {
   // Disconnect from the server
   return api.disconnect();
-}). catch(console.error);
+}). catch((error) => {
+  // Handle response errors
+  console.error("Response returned an Error:");
+  console.error(error);
+  return api.disconnect();
+});
 
 
 // Function to display similar console messages

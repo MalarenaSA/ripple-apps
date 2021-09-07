@@ -15,8 +15,9 @@ const api = new RippleAPI({
   server: process.env.XRPL_SERVER
 });
 
-// Handle Errors
+// Handle API Connection Errors
 api.on("error", (errorCode, errorMessage, data) => {
+  console.error(`API Connection Error:`);
   console.error(`${errorCode} : ${errorMessage} : ${data}`);
 });
 
@@ -41,7 +42,12 @@ api.connect().then(() => {
 }).then(() => {
   // Disconnect from the server
   return api.disconnect();
-}). catch(console.error);
+}). catch((error) => {
+  // Handle response errors
+  console.error("Response returned an Error:");
+  console.error(error);
+  return api.disconnect();
+});
 
 
 // Function to display formatted messages on the console
