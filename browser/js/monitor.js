@@ -285,7 +285,12 @@ function processResponse(data) {
     }
     // Check if returned status is "success" response
     if (data.status !== "success") {
-      throw new Error(`Response received does not have status: "success"`);
+      if (data.error === "actNotFound") {
+        // Process generic account not found 
+
+      } else {
+        throw new Error(`Response received does not have status: "success"`);
+      }
     }
 
     // If all OK then run resolve promise
@@ -313,15 +318,15 @@ async function getServerInfo() {
   reserveBaseXRP = response.result.info.validated_ledger.reserve_base_xrp;
   reserveIncXRP = response.result.info.validated_ledger.reserve_inc_xrp;
 
-  // Calculate Current Fee
-  const currentFee = response.result.info.validated_ledger.base_fee_xrp * response.result.info.load_factor;
+  // Calculate Current Transaction Cost
+  const currentTransCost = response.result.info.validated_ledger.base_fee_xrp * response.result.info.load_factor;
 
   // Update Server Info Table
   serverInfoEl.innerHTML = `
     <tr><th>Server Hostname:</th><td>${response.result.info.hostid} (<span class="${currentServer.displayClass}">${currentServer.name}</span>)</td></tr>
     <tr><th>State:</th><td class="text-capitalize ${SERVER_STATE_CLASS[response.result.info.server_state]}">${(response.result.info.server_state)}</td></tr>
     <tr><th>Ledgers Available:</th><td>${response.result.info.complete_ledgers}</td></tr>
-    <tr><th>Current Fee:</th><td>${currentFee.toFixed(6)} XRP</td></tr>
+    <tr><th>Transaction Cost:</th><td>${currentTransCost.toFixed(6)} XRP</td></tr>
   `;
 }
 
@@ -389,31 +394,46 @@ function getAccountsInfo() {
       }
       showStatus("col-success", "Connected");
 
-      // Calculate Balance in XRP and set class
-      const accBalXRP = convertDropsToXRP(response.result.account_data.Balance);
-      const accReserveXRP = (reserveBaseXRP + (reserveIncXRP * response.result.account_data.OwnerCount));
-      let accBalClass = "";
-      if (accBalXRP.lte(accReserveXRP)) {
-        accBalClass = "col-error";
-      } else if (accBalXRP.gt(accReserveXRP) && accBalXRP.lte(accReserveXRP + reserveBaseXRP)) {
-        accBalClass = "text-warning";
+      if (response.error === "actNotFound") {
+        // Process Account Not Found
+        accountInfoEls[index].innerHTML = `
+          <thead>
+            <tr><th class="text-center" colspan="2" scope="colgroup">
+              <h5 class="text-info">Account: ${account.name}</h5>
+            </th></tr>
+          </thead>
+          <tbody>
+            <tr><th>Address:</th><td><a class="link-light" href="${currentServer.explorerURL}accounts/${account.address}" target="explorer">${account.address}</a></td></tr>
+            <tr><th>Balance:</th><td class="col-error">Account Not Found!</td></tr>
+          </tbody>
+        `;
       } else {
-        accBalClass = "col-success";
+        // Calculate Balance in XRP and set class
+        const accBalXRP = convertDropsToXRP(response.result.account_data.Balance);
+        const accReserveXRP = (reserveBaseXRP + (reserveIncXRP * response.result.account_data.OwnerCount));
+        let accBalClass = "";
+        if (accBalXRP.lte(accReserveXRP)) {
+          accBalClass = "col-error";
+        } else if (accBalXRP.gt(accReserveXRP) && accBalXRP.lte(accReserveXRP + reserveBaseXRP)) {
+          accBalClass = "text-warning";
+        } else {
+          accBalClass = "col-success";
+        }
+        const accBalXRPText = new Intl.NumberFormat("en-GB", {minimumFractionDigits: 6}).format(accBalXRP.toFixed(6));
+  
+        // Update Account Info Table
+        accountInfoEls[index].innerHTML = `
+          <thead>
+            <tr><th class="text-center" colspan="2" scope="colgroup">
+              <h5 class="text-info">Account: ${account.name}</h5>
+            </th></tr>
+          </thead>
+          <tbody>
+            <tr><th>Address:</th><td><a class="link-light" href="${currentServer.explorerURL}accounts/${account.address}" target="explorer">${account.address}</a></td></tr>
+            <tr><th>Balance:</th><td><span class=${accBalClass}>${accBalXRPText}</span> XRP (Reserve: ${accReserveXRP}) as at Ledger '${response.result.ledger_index}'</td></tr>
+          </tbody>
+        `;
       }
-      const accBalXRPText = new Intl.NumberFormat("en-GB", {minimumFractionDigits: 6}).format(accBalXRP.toFixed(6));
-
-      // Update Account Info Table
-      accountInfoEls[index].innerHTML = `
-        <thead>
-          <tr><th class="text-center" colspan="2" scope="colgroup">
-            <h5 class="text-info">Account: ${account.name}</h5>
-          </th></tr>
-        </thead>
-        <tbody>
-          <tr><th>Address:</th><td><a class="link-light" href="${currentServer.explorerURL}accounts/${account.address}" target="explorer">${account.address}</a></td></tr>
-          <tr><th>Balance:</th><td><span class=${accBalClass}>${accBalXRPText}</span> XRP (Reserve: ${accReserveXRP}) as at Ledger '${response.result.ledger_index}'</td></tr>
-        </tbody>
-      `;
     }
   });
 }
