@@ -7,6 +7,11 @@ const Dotenv = require("dotenv");
 const dotenvConfig = Dotenv.config();
 if (dotenvConfig.error) console.log(dotenvConfig.error);
 
+// Get Transaction from Command Line or Env Variables
+const transaction = (process.argv[2] !== undefined) ? 
+  process.argv[2] :
+  process.env.XRPL_TRANSACTION;
+
 // Load ripple-lib API
 const RippleAPI = require("ripple-lib").RippleAPI;
 
@@ -35,16 +40,15 @@ api.on("disconnected", (code) => {
 // Connect to Server and process request
 api.connect().then(() => {
   // Send Request
-  return api.getTransaction(process.env.XRPL_TRANSACTION);
+  return api.getTransaction(transaction);
 }).then((response) => {
-  console.log(response);
   // Process Response
   showMessage("TransactionInfo", response);
-  showMessage("TransactionSummary", `Result: ${response.outcome.result} / Amount: ${response.outcome.deliveredAmount.currency} ${response.outcome.deliveredAmount.value}`);
+  showMessage("TransactionSummary", `Result: ${response.outcome.result}\nAmount: ${response.outcome.deliveredAmount.value} ${response.outcome.deliveredAmount.currency}`);
 }).then(() => {
   // Disconnect from the server
   return api.disconnect();
-}). catch((error) => {
+}).catch((error) => {
   // Handle response errors
   console.error("Response returned an Error:");
   console.error(error);

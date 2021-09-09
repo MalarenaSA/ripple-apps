@@ -42,7 +42,7 @@ api.connect().then(() => {
 }).then(() => {
   // Disconnect from the server
   return api.disconnect();
-}). catch((error) => {
+}).catch((error) => {
   // Handle response errors
   console.error("Response returned an Error:");
   console.error(error);

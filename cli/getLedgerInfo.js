@@ -40,12 +40,12 @@ api.connect().then(() => {
   // Process Response
   const age = (new Date() - new Date(response.closeTime)) / 1000;
   showMessage("LedgerInfo", response);
-  showMessage("LedgerSummary", `Age: ${age} / Latest:  ${response.ledgerVersion}`);
+  showMessage("LedgerSummary", `Age: ${age}s\nLatest:  ${response.ledgerVersion}`);
   // showMessage("Total XRP", api.dropsToXrp(response.totalDrops));  // Not really required!
 }).then(() => {
   // Disconnect from the server
   return api.disconnect();
-}). catch((error) => {
+}).catch((error) => {
   // Handle response errors
   console.error("Response returned an Error:");
   console.error(error);

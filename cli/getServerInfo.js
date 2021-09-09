@@ -39,11 +39,11 @@ api.connect().then(() => {
 }).then((response) => {
   // Process Response
   showMessage("ServerInfo", response);
-  showMessage("ServerSummary", `State: ${response.serverState} / Latest: ${response.validatedLedger.ledgerVersion}`);
+  showMessage("ServerSummary", `Hostname: ${response.hostID}\nState: ${response.serverState}\nLatest: ${response.validatedLedger.ledgerVersion}`);
 }).then(() => {
   // Disconnect from the server
   return api.disconnect();
-}). catch((error) => {
+}).catch((error) => {
   // Handle response errors
   console.error("Response returned an Error:");
   console.error(error);
