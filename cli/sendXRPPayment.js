@@ -63,23 +63,25 @@ api.connect().then(() => {
   showMessage("PreparedTx", (JSON.parse(preparedTx.txJSON)));
   showMessage("Instructions", (preparedTx.instructions));
   return ask("Sign above transaction (Yes/No)? ");
-}).then(() => {
+}).then((answer) => {
+  if (answer !== "Yes") {
+    // Only proceed if answer is "Yes"
+    throw "Signing Process Terminated.";
+  }
   // Sign transaction
   return api.sign(preparedTx.txJSON, process.env.XRPL_SECRET);
-}, () => {
-  // Do not sign transaction
-  throw "Signing Process Terminated.";
 }).then((response) => {
   // Display signedTx & ask to continue
   signedTx = response;
   showMessage("SignedTx", signedTx);
   return ask("Submit above signed transaction (Yes/No)? ");
-}).then(() => {
+}).then((answer) => {
+  if (answer !== "Yes") {
+    // Only proceed if answer is "Yes"
+    throw "Sending Process Terminated.";
+  }
   // Submit transaction
   return api.submit(signedTx.signedTransaction);
-}, () => {
-  // Do not submit transaction
-  throw "Sending Process Terminated.";
 }).then((response) => {
   // Display tentative result
   showMessage("Tentative Result", response);
@@ -106,17 +108,11 @@ function showMessage(title, message) {
   console.log(`========== \\${title} ==========\n`);
 }
 
-// Function to ask the user a question
+// Function to ask the user a question & return the answer
 function ask(question) {
-  return new Promise ((resolve, reject) => {
+  return new Promise ((resolve) => {
     rl.question(question, (answer) => {
-      if (answer === "Yes") {
-        // Only resolve if answer === Yes
-        resolve(answer);
-      } else {
-        // If answer !== Yes then reject
-        reject(answer);
-      }
+      resolve(answer);
     });
   });
 }
