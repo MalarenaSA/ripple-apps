@@ -43,7 +43,7 @@ const SERVER_STATE_CLASS = {  // Classes to use for different server states
 };
 const RIPPLE_EPOCH = 946684800;  // Ripple Epoch Timestamp in seconds
 const LOG_RESPONSE = false;  // Flag to output info responses to console
-const LOG_TRANS = true;  // Flag to output transaction data to console
+const LOG_TRANS = false;  // Flag to output transaction data to console
 
 // Global Variables
 let socket = null;  // Websocket Connection
