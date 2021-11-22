@@ -46,9 +46,9 @@ async function main() {
     });
 
     // Process Response
+    showMessage("TITLE", response, "full");
     const info = response.result.SOMETHING;
-    const summary = `${info}`;
-    showMessage("TITLE", response, summary);
+    showMessage("TITLESummary", `summaryData`);
 
   } catch (error) {
     // Handle Errors
