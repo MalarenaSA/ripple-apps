@@ -14,98 +14,95 @@ const rl = Readline.createInterface({
   output: process.stdout
 });
 
-// Load ripple-lib API
-const RippleAPI = require("ripple-lib").RippleAPI;
+// Load xrpl.js API
+const xrpl = require("xrpl");
+console.log();  // Blank line for ease of reading output
 
-// Configure API
-const api = new RippleAPI({
-  server: process.env.XRPL_SERVER
-});
+// Async function to connect to XRP Server and process requests
+async function main() {
+  // Configure Client
+  const client = new xrpl.Client(process.env.XRPL_SERVER_URL);
+  
+  // Handle Connection
+  client.on("connected", ()=> {
+    console.log(`[Connected] to ${process.env.XRPL_SERVER_NAME} server: ${process.env.XRPL_SERVER_URL}\n`);
+  });
+  
+  // Handle Disconnection
+  client.on("disconnected", (code)=> {
+    console.log(`[Disconnected] from ${process.env.XRPL_SERVER_NAME} server with code: ${code}\n`);
+  });
 
-// Handle API Connection Errors
-api.on("error", (errorCode, errorMessage, data) => {
-  console.error(`API Connection Error:`);
-  console.error(`${errorCode} : ${errorMessage} : ${data}`);
-});
+  // Create a wallet from an existing SEED
+  console.log("[Working] Getting Wallet...");
+  const wallet = xrpl.Wallet.fromSeed(process.env.XRPL_SEED);
+  console.log(`[Wallet] Created for account '${wallet.address}'\n`);
+  
+  try {
+    // Make connection
+    await client.connect();
 
-// Handle Connection
-api.on("connected", () => {
-  console.log(`Connected to server: ${process.env.XRPL_SERVER}\n`);
-});
+    // Prepare the transaction  
+    console.log("\n[Working] Transaction Being Prepared...");
+    const preparedTx = await client.autofill({
+      "TransactionType": "Payment",
+      "Account": wallet.classicAddress,
+      "Amount": process.env.XRPL_AMT_DROPS,
+      "Destination": process.env.XRPL_DESTINATION
+    });
 
-// Handle Disconnection
-api.on("disconnected", (code) => {
-  console.log(`Disconnected from server with code: ${code}\n`);
-  // Close readline
+    // Display preparedTx & ask to continue
+    showMessage("PreparedTx", preparedTx, true);
+    const answerSign = await ask("Sign above transaction (Yes/No)? ");
+    if (answerSign !== "Yes") {
+      // Only proceed if answer is "Yes"
+      throw "Signing Process Terminated.";
+    }
+
+    // Sign the transaction
+    console.log(`\n[Working] Transaction Being Signed...`);
+    const signedTx = wallet.sign(preparedTx);
+    
+    // Display signedTx & ask to continue
+    showMessage("SignedTx", signedTx, true);
+    const answerSubmit = await ask("Submit above signed transaction (Yes/No)? ");
+    if (answerSubmit !== "Yes") {
+      // Only proceed if answer is "Yes"
+      throw "Submission Process Terminated.";
+    }
+
+    // Submit transaction & Wait
+    console.log(`\n[Working] Transaction Submitted. Awaiting Result...`);
+    const tx = await client.submitAndWait(signedTx.tx_blob);
+
+    // Display submission results
+    showMessage("SubmissionResult", tx, true);
+    const meta = tx.result.meta;
+    showMessage("BalanceChanges:", xrpl.getBalanceChanges(meta), true);
+    console.log(`Link: ${process.env.XRPL_EXPLORER}transactions/${tx.result.hash} `);
+    console.log(`CLI: node getTransactionInfo.js ${tx.result.hash}\n`);
+
+  } catch (error) {
+    // Handle Errors
+    console.error(`[Error]: ${error}\n`);
+  }
+
+  // Disconnect from server & close Readline
+  client.disconnect();
   rl.close();
-});
-
-
-// Connect to Server and process request
-let preparedTx = {};  // Prepared Transaction
-let signedTx = {};  // Signed Transaction
-
-api.connect().then(() => {
-  // Prepare Transaction
-  const transaction = {
-    "TransactionType": "Payment",
-    "Account": process.env.XRPL_ADDRESS,
-    "Amount": process.env.XRPL_AMT_DROPS,
-    "Destination": process.env.XRPL_DESTINATION
-  };
-  const instructions = {
-    "maxLedgerVersionOffset": 50  // ~ 3-4mins
-  };
-  return api.prepareTransaction(transaction, instructions);
-}).then((response) => {
-  // Display preparedTx & ask to continue
-  preparedTx = response;
-  showMessage("PreparedTx", (JSON.parse(preparedTx.txJSON)));
-  showMessage("Instructions", (preparedTx.instructions));
-  return ask("Sign above transaction (Yes/No)? ");
-}).then((answer) => {
-  if (answer !== "Yes") {
-    // Only proceed if answer is "Yes"
-    throw "Signing Process Terminated.";
-  }
-  // Sign transaction
-  return api.sign(preparedTx.txJSON, process.env.XRPL_SECRET);
-}).then((response) => {
-  // Display signedTx & ask to continue
-  signedTx = response;
-  showMessage("SignedTx", signedTx);
-  return ask("Submit above signed transaction (Yes/No)? ");
-}).then((answer) => {
-  if (answer !== "Yes") {
-    // Only proceed if answer is "Yes"
-    throw "Sending Process Terminated.";
-  }
-  // Submit transaction
-  return api.submit(signedTx.signedTransaction);
-}).then((response) => {
-  // Display tentative result
-  showMessage("Tentative Result", response);
-  console.log(`See monitor, XRPL Explorer or CLI:getTransaction() for final status.`);
-  console.log(`Link: ${process.env.XRPL_EXPLORER}transactions/${response.tx_json.hash}`);
-  console.log(`CLI: node getTransactionInfo.js ${response.tx_json.hash}\n`);
-}).then(() => {
-  // Disconnect from the server
-  return api.disconnect();
-}).catch((error) => {
-  // Handle response errors
-  if (typeof error === "object") {
-    console.error("Response returned an Error:");
-  }
-  console.error(error);
-  return api.disconnect();
-});
+}
 
 
 // Function to display formatted messages on the console
-function showMessage(title, message) {
+function showMessage(title, message, fullDepth = false) {
   console.log(`---------- ${title} ----------`);
-  console.log(message);
-  console.log(`========== \\${title} ==========\n`);
+  if (fullDepth === true) {
+    // Use this for showing full depth objects
+    console.dir(message, {depth: null});
+  } else {
+    console.log(message);
+  }
+  console.log(`========== \\${title} ==========`, "\n");
 }
 
 // Function to ask the user a question & return the answer
@@ -116,3 +113,6 @@ function ask(question) {
     });
   });
 }
+
+// Run main function
+main();
