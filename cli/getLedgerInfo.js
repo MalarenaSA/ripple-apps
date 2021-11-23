@@ -42,7 +42,7 @@ async function main() {
     });
     
     // Process Response
-    showMessage("LedgerInfo", response, "full");
+    showMessage("LedgerInfo", response, true);
     const ledger = response.result.ledger;
     const ledgerAge = (new Date().getTime() / 1000) - (RIPPLE_EPOCH + ledger.close_time);
     showMessage("LedgerSummary", `Ledger Index: ${ledger.ledger_index}\nLedger Age: ${ledgerAge.toFixed(4)}s\nValidated: ${response.result.validated}`);
@@ -58,9 +58,9 @@ async function main() {
 
 
 // Function to display formatted messages on the console
-function showMessage(title, message, depth = null) {
+function showMessage(title, message, fullDepth = false) {
   console.log(`---------- ${title} ----------`);
-  if (depth === "full") {
+  if (fullDepth === true) {
     // Use this for showing full depth objects
     console.dir(message, {depth: null});
   } else {

@@ -49,7 +49,7 @@ async function main() {
     // Process Response
     showMessage("TITLE", response, "full");
     const info = response.result.SOMETHING;
-    showMessage("TITLESummary", `summaryData`);
+    showMessage("TITLESummary", `Summary Data: ${info}`);
 
   } catch (error) {
     // Handle Errors
@@ -61,9 +61,9 @@ async function main() {
 }
 
 // Function to display formatted messages on the console
-function showMessage(title, message, depth = null) {
+function showMessage(title, message, fullDepth = false) {
   console.log(`---------- ${title} ----------`);
-  if (depth === "full") {
+  if (fullDepth === true) {
     // Use this for showing full depth objects
     console.dir(message, {depth: null});
   } else {

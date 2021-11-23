@@ -44,9 +44,9 @@ async function main() {
     });
 
     // Process Response
-    showMessage("TransactionInfo", response, "full");
+    showMessage("TransactionInfo", response, true);
     const meta = response.result.meta;
-    showMessage("BalanceChanges:", xrpl.getBalanceChanges(meta), "full");
+    showMessage("BalanceChanges:", xrpl.getBalanceChanges(meta), true);
     showMessage("TransactionSummary", `Transaction Type: ${response.result.TransactionType}\nResult: ${meta.TransactionResult}\nValidated: ${response.result.validated  }\nDelivered Amount: ${xrpl.dropsToXrp(meta.delivered_amount)} XRP`);
     
 
@@ -61,9 +61,9 @@ async function main() {
 
 
 // Function to display formatted messages on the console
-function showMessage(title, message, depth = null) {
+function showMessage(title, message, fullDepth = false) {
   console.log(`---------- ${title} ----------`);
-  if (depth === "full") {
+  if (fullDepth === true) {
     // Use this for showing full depth objects
     console.dir(message, {depth: null});
   } else {

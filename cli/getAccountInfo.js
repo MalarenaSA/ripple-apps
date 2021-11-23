@@ -48,7 +48,7 @@ async function main() {
     });
     
     // Process Response
-    showMessage("AccountInfo", response, "full");
+    showMessage("AccountInfo", response, true);
     const accountData = response.result.account_data;
     showMessage("AccountSummary", `Account: ${accountName} - ${accountAddress}\nBalance: ${xrpl.dropsToXrp(accountData.Balance)} XRP`);
 
@@ -63,9 +63,9 @@ async function main() {
 
 
 // Function to display formatted messages on the console
-function showMessage(title, message, depth = null) {
+function showMessage(title, message, fullDepth = false) {
   console.log(`---------- ${title} ----------`);
-  if (depth === "full") {
+  if (fullDepth === true) {
     // Use this for showing full depth objects
     console.dir(message, {depth: null});
   } else {

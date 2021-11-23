@@ -38,7 +38,7 @@ async function main() {
     });
 
     // Process Response
-    showMessage("CurrentFee", response, "full");
+    showMessage("CurrentFee", response, true);
     const drops = response.result.drops;
     const minFeeCush = Math.round(drops.minimum_fee * client.feeCushion);
     const openLedgerFeeCush = Math.round(drops.open_ledger_fee * client.feeCushion);
@@ -55,9 +55,9 @@ async function main() {
 
 
 // Function to display formatted messages on the console
-function showMessage(title, message, depth = null) {
+function showMessage(title, message, fullDepth = false) {
   console.log(`---------- ${title} ----------`);
-  if (depth === "full") {
+  if (fullDepth === true) {
     // Use this for showing full depth objects
     console.dir(message, {depth: null});
   } else {

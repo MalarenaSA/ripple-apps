@@ -38,7 +38,7 @@ async function main() {
     });
 
     // Process Response
-    showMessage("ServerInfo", response, "full");
+    showMessage("ServerInfo", response, true);
     const info = response.result.info;
     showMessage("ServerSummary", `Hostname: ${info.hostid}\nState: ${info.server_state}\nLatest Ledger: ${info.validated_ledger.seq}`);
     
@@ -52,9 +52,9 @@ async function main() {
 }
 
 // Function to display formatted messages on the console
-function showMessage(title, message, depth = null) {
+function showMessage(title, message, fullDepth = false) {
   console.log(`---------- ${title} ----------`);
-  if (depth === "full") {
+  if (fullDepth === true) {
     // Use this for showing full depth objects
     console.dir(message, {depth: null});
   } else {
