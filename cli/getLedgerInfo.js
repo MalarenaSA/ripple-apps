@@ -12,6 +12,7 @@ if (dotenvConfig.error) console.log(dotenvConfig.error);
 
 // Load xrpl.js API
 const xrpl = require("xrpl");
+console.log();  // Blank line for ease of reading output
 
 // Async function to connect to XRP Server and process requests
 async function main() {
@@ -25,7 +26,7 @@ async function main() {
   
   // Handle Disconnection
   client.on("disconnected", (code)=> {
-    console.log(`[Disconnected] from server with code: ${code}`);
+    console.log(`[Disconnected] from server with code: ${code}\n`);
   });
 
   try {
