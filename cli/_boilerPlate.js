@@ -14,16 +14,16 @@ console.log();  // Blank line for ease of reading output
 // Async function to connect to XRP Server and process requests
 async function main() {
   // Configure Client
-  const client = new xrpl.Client(process.env.XRPL_SERVER);
+  const client = new xrpl.Client(process.env.XRPL_SERVER_URL);
   
   // Handle Connection
   client.on("connected", ()=> {
-    console.log(`[Connected] to server: ${process.env.XRPL_SERVER}\n`);
+    console.log(`[Connected] to ${process.env.XRPL_SERVER_NAME} server: ${process.env.XRPL_SERVER_URL}\n`);
   });
   
   // Handle Disconnection
   client.on("disconnected", (code)=> {
-    console.log(`[Disconnected] from server with code: ${code}\n`);
+    console.log(`[Disconnected] from ${process.env.XRPL_SERVER_NAME} server with code: ${code}\n`);
   });
   
   // Create a wallet from an existing SEED
