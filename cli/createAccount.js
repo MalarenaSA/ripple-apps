@@ -2,39 +2,26 @@
 
 // createAccount App - To create a new XRP Ledger account
 
-// Load Env Variables
-const Dotenv = require("dotenv");
-const dotenvConfig = Dotenv.config();
-if (dotenvConfig.error) console.log(dotenvConfig.error);
+// Load xrpl.js API
+const xrpl = require("xrpl");
+console.log();  // Blank line for ease of reading output
 
-// Load ripple-lib API
-const RippleAPI = require("ripple-lib").RippleAPI;
+// Create new wallet containing new account and seed
+const wallet = xrpl.Wallet.generate();
 
-// Configure API
-const api = new RippleAPI({
-  server: process.env.XRPL_SERVER
-});
+// Process Response
+showMessage("Wallet", wallet, true);
+showMessage("WalletSummary", `Address: ${wallet.classicAddress}\nSeed: ${wallet.seed}`);
 
-// Handle API Connection Errors
-api.on("error", (errorCode, errorMessage, data) => {
-  console.error(`API Connection Error:`);
-  console.error(`${errorCode} : ${errorMessage} : ${data}`);
-});
 
-// Create new account
-async function createAccount() {
-  const response = await api.generateAddress();
-  showMessage("CreateAccount", response);
-  showMessage("Address", response.address);
-  showMessage("Secret", response.secret);
-}
-
-// Run Function
-createAccount();
-
-// Function to display similar console messages
-function showMessage(title, message) {
+// Function to display formatted messages on the console
+function showMessage(title, message, fullDepth = false) {
   console.log(`---------- ${title} ----------`);
-  console.log(message);
+  if (fullDepth === true) {
+    // Use this for showing full depth objects
+    console.dir(message, {depth: null});
+  } else {
+    console.log(message);
+  }
   console.log(`========== \\${title} ==========`, "\n");
 }

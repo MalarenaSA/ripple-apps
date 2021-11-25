@@ -7,53 +7,61 @@ const Dotenv = require("dotenv");
 const dotenvConfig = Dotenv.config();
 if (dotenvConfig.error) console.log(dotenvConfig.error);
 
-// Load ripple-lib API
-const RippleAPI = require("ripple-lib").RippleAPI;
+// Load xrpl.js API
+const xrpl = require("xrpl");
+console.log();  // Blank line for ease of reading output
 
-// Configure API
-const api = new RippleAPI({
-  server: process.env.XRPL_SERVER
-});
+// Async function to connect to XRP Server and process requests
+async function main() {
+  // Configure Client
+  const client = new xrpl.Client(process.env.XRPL_SERVER_URL);
+  
+  // Handle Connection
+  client.on("connected", ()=> {
+    console.log(`[Connected] to ${process.env.XRPL_SERVER_NAME} server: ${process.env.XRPL_SERVER_URL}\n`);
+  });
+  
+  // Handle Disconnection
+  client.on("disconnected", (code)=> {
+    console.log(`[Disconnected] from ${process.env.XRPL_SERVER_NAME} server with code: ${code}\n`);
+  });
 
-// Handle API Connection Errors
-api.on("error", (errorCode, errorMessage, data) => {
-  console.error(`API Connection Error:`);
-  console.error(`${errorCode} : ${errorMessage} : ${data}`);
-});
+  try {
+    // Make connection
+    await client.connect();
 
-// Handle Connection
-api.on("connected", () => {
-  console.log(`Connected to server: ${process.env.XRPL_SERVER}\n`);
-});
+    // Create & Send Request
+    console.log(`[Working] Request Submitted...\n`);
+    const response = await client.request({
+      "id": "server_info",
+      "command": "server_info"
+    });
 
-// Handle Disconnection
-api.on("disconnected", (code) => {
-  console.log(`Disconnected from server with code: ${code}\n`);
-});
+    // Process Response
+    showMessage("ServerInfo", response, true);
+    const info = response.result.info;
+    showMessage("ServerSummary", `Hostname: ${info.hostid}\nState: ${info.server_state}\nLatest Ledger: ${info.validated_ledger.seq}`);
+    
+  } catch (error) {
+    // Handle Errors
+    console.error(`[Error]: ${error}\n`);
+  }
 
+  // Disconnect from server
+  client.disconnect();
+}
 
-// Connect to Server and process request
-api.connect().then(() => {
-  // Send Request
-  return api.getServerInfo();
-}).then((response) => {
-  // Process Response
-  showMessage("ServerInfo", response);
-  showMessage("ServerSummary", `Hostname: ${response.hostID}\nState: ${response.serverState}\nLatest: ${response.validatedLedger.ledgerVersion}`);
-}).then(() => {
-  // Disconnect from the server
-  return api.disconnect();
-}).catch((error) => {
-  // Handle response errors
-  console.error("Response returned an Error:");
-  console.error(error);
-  return api.disconnect();
-});
-
-
-// Function to display similar console messages
-function showMessage(title, message) {
+// Function to display formatted messages on the console
+function showMessage(title, message, fullDepth = false) {
   console.log(`---------- ${title} ----------`);
-  console.log(message);
+  if (fullDepth === true) {
+    // Use this for showing full depth objects
+    console.dir(message, {depth: null});
+  } else {
+    console.log(message);
+  }
   console.log(`========== \\${title} ==========`, "\n");
 }
+
+// Run main function
+main();
