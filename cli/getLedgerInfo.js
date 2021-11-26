@@ -2,9 +2,6 @@
 
 // getLedgerInfo App - To get ledger info
 
-// Global Constants
-const RIPPLE_EPOCH = 946684800;  // Ripple Epoch Timestamp in seconds
-
 // Load Env Variables
 const Dotenv = require("dotenv");
 const dotenvConfig = Dotenv.config();
@@ -44,7 +41,7 @@ async function main() {
     // Process Response
     showMessage("LedgerInfo", response, true);
     const ledger = response.result.ledger;
-    const ledgerAge = (new Date().getTime() / 1000) - (RIPPLE_EPOCH + ledger.close_time);
+    const ledgerAge = ((new Date().getTime() - xrpl.rippleTimeToUnixTime(ledger.close_time)) / 1000);
     showMessage("LedgerSummary", `Ledger Index: ${ledger.ledger_index}\nLedger Age: ${ledgerAge.toFixed(4)}s\nValidated: ${response.result.validated}`);
 
   } catch (error) {
