@@ -36,26 +36,51 @@ async function main() {
     console.log(`[Disconnected] from ${process.env.XRPL_SERVER_NAME} server with code: ${code}\n`);
   });
 
-  // Create a wallet from an existing SEED
-  console.log("[Working] Getting Wallet...");
-  const wallet = xrpl.Wallet.fromSeed(process.env.XRPL_SEED);
-  console.log(`[Wallet] Created for account '${wallet.address}'\n`);
-  
   try {
+    // Check if XRPL_SEED is valid
+    if (!xrpl.isValidSecret(process.env.XRPL_SEED)) {
+      throw "XRPL_SEED is invalid.";
+    }
+
+    // Check if XRPL_DESTINATION is valid
+    if (!xrpl.isValidClassicAddress(process.env.XRPL_DESTINATION)) {
+      throw "XRPL_DESTINATION is invalid.";
+    }
+
+    // Check if XRPL_AMT_DROPS is valid, not less than 1 and not a decimal
+    const txAmount = new BigNumber(process.env.XRPL_AMT_DROPS);
+    if (txAmount.isNaN() || txAmount.lte(0) || !txAmount.isInteger()) {
+      throw "XRPL_AMT_DROPS is invalid.";
+    }
+    
+    // Create a wallet from an existing SEED
+    console.log("[Working] Getting Wallet...");
+    const wallet = xrpl.Wallet.fromSeed(process.env.XRPL_SEED);
+    console.log(`[Wallet] Created for account '${wallet.address}'\n`);
+
+    // Check that XRPL_ADDRESS is the same as the Wallet Address
+    if (process.env.XRPL_ADDRESS !== wallet.address) {
+      console.log(`\x1b[33m[Warning]\x1b[0m XRPL_ADDRESS does not match the Wallet Address.\n`);
+    }
+
+    // Check Destination Address is not the same as the Wallet Address
+    if (process.env.XRPL_DESTINATION === wallet.address) {
+      throw "Destination Address is the SAME as Wallet Address.";
+    }    
+
     // Make connection
     await client.connect();
 
     // Prepare the transaction  
-    console.log("\n[Working] Transaction Being Prepared...");
+    console.log("[Working] Transaction Being Prepared...");
     const preparedTx = await client.autofill({
       "TransactionType": "Payment",
-      "Account": wallet.classicAddress,
-      "Amount": process.env.XRPL_AMT_DROPS,
+      "Account": wallet.address,
+      "Amount": txAmount.toString(),
       "Destination": process.env.XRPL_DESTINATION
     });
 
     // Calculate total cost
-    const txAmount = new BigNumber(preparedTx.Amount);
     const totalCost = txAmount.plus(preparedTx.Fee);
 
     // Display preparedTx & ask to continue
@@ -92,7 +117,7 @@ async function main() {
 
   } catch (error) {
     // Handle Errors
-    console.error(`[Error]: ${error}\n`);
+    console.error(`\x1b[31m[Error]\x1b[0m ${error}\n`);
   }
 
   // Disconnect from server & close Readline
