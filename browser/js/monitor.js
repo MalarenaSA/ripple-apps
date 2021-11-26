@@ -203,7 +203,7 @@ function loadWebSocket() {
         return;
       }
     });
-    console.log(`${fixDate(new Date)}> Disconnected from '${disconServerName}' at '${event.currentTarget.url}' with code '${event.code}' (See: https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#status_codes)`);
+    console.log(`${fixDate(new Date)}> Disconnected from '${disconServerName}' at '${event.currentTarget.url}' with code '${event.code}' (See: https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code)`);
     // Show disconnected message if not re-connected
     if (socket.readyState !== 1) {
       showStatus("text-warning", "Disconnected");
