@@ -14,6 +14,9 @@ const rl = Readline.createInterface({
   output: process.stdout
 });
 
+// Load BigNumber Library
+const BigNumber = require("bignumber.js");
+
 // Load xrpl.js API
 const xrpl = require("xrpl");
 console.log();  // Blank line for ease of reading output
@@ -51,8 +54,13 @@ async function main() {
       "Destination": process.env.XRPL_DESTINATION
     });
 
+    // Calculate total cost
+    const txAmount = new BigNumber(preparedTx.Amount);
+    const totalCost = txAmount.plus(preparedTx.Fee);
+
     // Display preparedTx & ask to continue
     showMessage("PreparedTx", preparedTx, true);
+    console.log(`This will cost ${xrpl.dropsToXrp(totalCost)} XRP\n`);
     const answerSign = await ask("Sign above transaction (Yes/No)? ");
     if (answerSign !== "Yes") {
       // Only proceed if answer is "Yes"
