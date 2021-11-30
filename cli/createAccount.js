@@ -6,12 +6,18 @@
 const xrpl = require("xrpl");
 console.log();  // Blank line for ease of reading output
 
-// Create new wallet containing new account and seed
-const wallet = xrpl.Wallet.generate();
-
-// Process Response
-showMessage("Wallet", wallet, true);
-showMessage("WalletSummary", `Address: ${wallet.classicAddress}\nSeed: ${wallet.seed}`);
+try {
+  // Create new wallet containing new account and seed
+  const wallet = xrpl.Wallet.generate();
+  
+  // Process Response
+  showMessage("Wallet", wallet, true);
+  showMessage("WalletSummary", `Address: ${wallet.address}\nSeed: ${wallet.seed}`);
+  
+} catch (error) {
+  // Handle Errors
+  console.error(`\x1b[31m[Error]\x1b[0m ${error}\n`);
+}
 
 
 // Function to display formatted messages on the console

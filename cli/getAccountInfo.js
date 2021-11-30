@@ -35,6 +35,15 @@ async function main() {
   });
 
   try {
+    // Check if XRPL_ADDRESS / Account Address is valid
+    if (!xrpl.isValidClassicAddress(accountAddress)) {
+      if (process.argv[2] !== undefined) {
+        throw "Account Address is invalid.";
+      } else {
+        throw "XRPL_ADDRESS is invalid.";
+      }
+    }
+
     // Make connection
     await client.connect();
 
@@ -54,7 +63,7 @@ async function main() {
 
   } catch (error) {
     // Handle Errors
-    console.error(`[Error]: ${error}\n`);
+    console.error(`\x1b[31m[Error]\x1b[0m ${error}\n`);
   }
 
   // Disconnect from server

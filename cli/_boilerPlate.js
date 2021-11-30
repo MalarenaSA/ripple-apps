@@ -26,13 +26,23 @@ async function main() {
     console.log(`[Disconnected] from ${process.env.XRPL_SERVER_NAME} server with code: ${code}\n`);
   });
   
-  // Create a wallet from an existing SEED
-  /* Only required if signing a transaction */
-  console.log("[Working] Getting Wallet...");
-  const wallet = xrpl.Wallet.fromSeed(process.env.XRPL_SEED);
-  console.log(`[Wallet] Created for account '${wallet.address}'\n`);
-  
   try {
+    // Check if XRPL_ADDRESS is valid
+    if (!xrpl.isValidClassicAddress(process.env.XRPL_ADDRESS)) {
+      throw "XRPL_ADDRESS is invalid.";
+    }
+
+    // Check if XRPL_SEED is valid
+    if (!xrpl.isValidSecret(process.env.XRPL_SEED)) {
+      throw "XRPL_SEED is invalid.";
+    }
+    
+    // Create a wallet from an existing SEED
+    /* NOTE: Only required if signing a transaction */
+    console.log("[Working] Getting Wallet...");
+    const wallet = xrpl.Wallet.fromSeed(process.env.XRPL_SEED);
+    console.log(`[Wallet] Created for account '${wallet.address}'\n`);
+
     // Make connection
     await client.connect();
 
@@ -53,7 +63,7 @@ async function main() {
 
   } catch (error) {
     // Handle Errors
-    console.error(`[Error]: ${error}\n`);
+    console.error(`\x1b[31m[Error]\x1b[0m ${error}\n`);
   }
 
   // Disconnect from server

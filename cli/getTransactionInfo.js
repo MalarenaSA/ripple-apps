@@ -52,7 +52,7 @@ async function main() {
 
   } catch (error) {
     // Handle Errors
-    console.error(`[Error]: ${error}\n`);
+    console.error(`\x1b[31m[Error]\x1b[0m ${error}\n`);
   }
 
   // Disconnect from server
