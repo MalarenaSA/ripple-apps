@@ -7,7 +7,7 @@ const Dotenv = require("dotenv");
 const dotenvConfig = Dotenv.config();
 if (dotenvConfig.error) console.log(dotenvConfig.error);
 
-// Get Account Details from Command Line or Env Variables
+// Get Account Details from the Command Line or Env Variables
 const accountName = (process.argv[2] !== undefined) ?
   "CLI" :
   process.env.XRPL_ACCOUNT;
@@ -15,52 +15,73 @@ const accountAddress = (process.argv[2] !== undefined) ?
   process.argv[2] :
   process.env.XRPL_ADDRESS;
 
-// Load ripple-lib API
-const RippleAPI = require("ripple-lib").RippleAPI;
+// Load xrpl.js API
+const xrpl = require("xrpl");
+console.log();  // Blank line for ease of reading output
 
-// Configure API
-const api = new RippleAPI({
-  server: process.env.XRPL_SERVER
-});
+// Async function to connect to XRP Server and process requests
+async function main() {
+  // Configure Client
+  const client = new xrpl.Client(process.env.XRPL_SERVER_URL);
 
-// Handle API Connection Errors
-api.on("error", (errorCode, errorMessage, data) => {
-  console.error(`API Connection Error:`);
-  console.error(`${errorCode} : ${errorMessage} : ${data}`);
-});
+  // Handle Connection
+  client.on("connected", ()=> {
+    console.log(`[Connected] to ${process.env.XRPL_SERVER_NAME} server: ${process.env.XRPL_SERVER_URL}\n`);
+  });
+  
+  // Handle Disconnection
+  client.on("disconnected", (code)=> {
+    console.log(`[Disconnected] from ${process.env.XRPL_SERVER_NAME} server with code: ${code}\n`);
+  });
 
-// Handle Connection
-api.on("connected", () => {
-  console.log(`Connected to server: ${process.env.XRPL_SERVER}\n`);
-});
+  try {
+    // Check if XRPL_ADDRESS / Account Address is valid
+    if (!xrpl.isValidClassicAddress(accountAddress)) {
+      if (process.argv[2] !== undefined) {
+        throw "Account Address is invalid.";
+      } else {
+        throw "XRPL_ADDRESS is invalid.";
+      }
+    }
 
-// Handle Disconnection
-api.on("disconnected", (code) => {
-  console.log(`Disconnected from server with code: ${code}\n`);
-});
+    // Make connection
+    await client.connect();
 
-// Connect to Server and process request
-api.connect().then(() => {
-  // Send Request
-  return api.getAccountInfo(accountAddress);
-}).then((response) => {
-  // Process Response
-  showMessage("Account", `${accountName} - ${accountAddress}`);
-  showMessage("AccountInfo", response);
-}).then(() => {
-  // Disconnect from the server
-  return api.disconnect();
-}).catch((error) => {
-  // Handle response errors
-  console.error("Response returned an Error:");
-  console.error(error);
-  return api.disconnect();
-});
+    // Create & Send Request
+    console.log(`[Working] Request Submitted...\n`);
+    const response = await client.request({
+      "id": "account_info",
+      "command": "account_info",
+      "account": accountAddress,
+      "ledger_index": "validated"
+    });
+    
+    // Process Response
+    showMessage("AccountInfo", response, true);
+    const accountData = response.result.account_data;
+    showMessage("AccountSummary", `Account: ${accountName} - ${accountAddress}\nBalance: ${xrpl.dropsToXrp(accountData.Balance)} XRP`);
 
+  } catch (error) {
+    // Handle Errors
+    console.error(`\x1b[31m[Error]\x1b[0m ${error}\n`);
+  }
 
-// Function to display similar console messages
-function showMessage(title, message) {
-  console.log(`---------- ${title} ----------`);
-  console.log(message);
-  console.log(`========== \\${title} ==========\n`);
+  // Disconnect from server
+  client.disconnect();
 }
+
+
+// Function to display formatted messages on the console
+function showMessage(title, message, fullDepth = false) {
+  console.log(`---------- ${title} ----------`);
+  if (fullDepth === true) {
+    // Use this for showing full depth objects
+    console.dir(message, {depth: null});
+  } else {
+    console.log(message);
+  }
+  console.log(`========== \\${title} ==========`, "\n");
+}
+
+// Run main function
+main();
