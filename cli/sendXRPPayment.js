@@ -52,6 +52,15 @@ async function main() {
     if (txAmount.isNaN() || txAmount.lte(0) || !txAmount.isInteger()) {
       throw "XRPL_AMT_DROPS is invalid.";
     }
+
+    // Check if XRPL_DESTINATION_TAG is populated with a number
+    let addDestinationTag = false;  // Flag to check if need to add DestinationTag to Tx
+    if (process.env.XRPL_DESTINATION_TAG !== "TODO" && process.env.XRPL_DESTINATION_TAG.length > 0) {
+      if (isNaN(process.env.XRPL_DESTINATION_TAG)) {
+        throw "XRPL_DESTINATION_TAG is invalid.";
+      }
+      addDestinationTag = true;
+    }
     
     // Create a wallet from an existing SEED
     console.log("[Working] Getting Wallet...");
@@ -71,14 +80,22 @@ async function main() {
     // Make connection
     await client.connect();
 
-    // Prepare the transaction  
-    console.log("[Working] Transaction Being Prepared...");
-    const preparedTx = await client.autofill({
+    // Create transaction request
+    const requestedTx = {
       "TransactionType": "Payment",
       "Account": wallet.address,
       "Amount": txAmount.toString(),
-      "Destination": process.env.XRPL_DESTINATION
-    });
+      "Destination": process.env.XRPL_DESTINATION,
+    };
+
+    // Add DestinationTag if included
+    if (addDestinationTag === true) {
+      requestedTx.DestinationTag = +process.env.XRPL_DESTINATION_TAG;
+    }
+
+    // Prepare the transaction  
+    console.log("[Working] Transaction Being Prepared...");
+    const preparedTx = await client.autofill(requestedTx);
 
     // Calculate total cost
     const totalCost = txAmount.plus(preparedTx.Fee);
